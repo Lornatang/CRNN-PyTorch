@@ -1,6 +1,3 @@
-opencv-python
-numpy
-tqdm
 torch
-torchvision
-natsort
+numpy
+Pillow
