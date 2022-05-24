@@ -114,7 +114,6 @@ venv.bak/
 
 # mkdocs documentation
 /site
-
 # mypy
 .mypy_cache/
 .dmypy.json
@@ -122,3 +121,26 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# custom
+.idea
+.vscode
+
+# Mac configure file.
+.DS_Store
+
+# Program run create directory.
+data
+results
+samples
+
+# Program run create file.
+*.JPEG
+*.jpeg
+*.bmp
+*.png
+*.mp4
+*.zip
+*.csv
+*.pth
+*.mdb
