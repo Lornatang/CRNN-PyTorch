@@ -1,3 +1,4 @@
-torch
+opencv-python
 numpy
+torch
 Pillow

@@ -20,7 +20,11 @@ os.system("python ./calculate_image_mean_and_std.py "
           "--image_width 100 "
           "--image_height 32")
 
+<<<<<<< Updated upstream
 # # Calculate the mean and variance of a train dataset scripts
+=======
+# Calculate the mean and variance of a train dataset scripts
+>>>>>>> Stashed changes
 os.system("python ./calculate_image_mean_and_std.py "
           "--dataroot ../data/90kDICT32px/ "
           "--image_file_name annotation_train.txt "

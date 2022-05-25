@@ -13,86 +13,86 @@
 # ==============================================================================
 import os
 
+import cv2
 import numpy as np
 import torch
-from PIL import Image
 from torch.utils.data import Dataset
 
 
+def load_image_label_from_file(dataroot: str, image_file_name: str, label_file_name: str):
+    # Initialize the definition of image path, image text information, etc.
+    labels_map = {}
+    image_paths = []
+    image_texts = []
+
+    # Read text labels and compose a label map
+    with open(os.path.join(dataroot, label_file_name), "r") as f:
+        for i, line in enumerate(f.readlines()):
+            labels_map[i] = line.strip()
+
+    # Read image path and corresponding text information
+    with open(os.path.join(dataroot, image_file_name), "r") as f:
+        for line in f.readlines():
+            path, index = line.strip().split(" ")
+            text = labels_map[int(index)]
+            image_paths.append(os.path.join(dataroot, path))
+            image_texts.append(text)
+
+    return image_paths, image_texts
+
+
 class Synth90kDataset(Dataset):
-    CHARS = "0123456789abcdefghijklmnopqrstuvwxyz"
-    CHAR2LABEL = {char: i + 1 for i, char in enumerate(CHARS)}
-    LABEL2CHAR = {label: char for char, label in CHAR2LABEL.items()}
+    def __init__(self,
+                 dataroot: str,
+                 image_file_name: str,
+                 label_file_name: str,
+                 labels_dict: dict,
+                 image_width: int,
+                 image_height: int,
+                 mean: list,
+                 std: list):
+        self.labels_dict = labels_dict
+        self.image_width = image_width
+        self.image_height = image_height
+        self.mean = mean
+        self.std = std
 
-    def __init__(self, root_dir=None, mode=None, paths=None, img_height=32, img_width=100):
-        self.img_height = img_height
-        self.img_width = img_width
-
-        if root_dir and mode and not paths:
-            self.paths, self.texts = self._load_from_raw_files(root_dir, mode)
-        elif not root_dir and not mode and paths:
-            self.texts = None
-
-    def _load_from_raw_files(self, root_dir, mode):
-        mapping = {}
-        with open(os.path.join(root_dir, 'lexicon.txt'), 'r') as fr:
-            for i, line in enumerate(fr.readlines()):
-                mapping[i] = line.strip()
-
-        paths_file = None
-        if mode == 'train':
-            paths_file = 'annotation_train.txt'
-        elif mode == 'valid':
-            paths_file = 'annotation_val.txt'
-        elif mode == 'test':
-            paths_file = 'annotation_test.txt'
-
-        paths = []
-        texts = []
-        with open(os.path.join(root_dir, paths_file), "r") as fr:
-            for line in fr.readlines():
-                path, index_str = line.strip().split(" ")
-                path = os.path.join(root_dir, path)
-                index = int(index_str)
-                text = mapping[index]
-                paths.append(path)
-                texts.append(text)
-        return paths, texts
+        self.image_paths, self.image_texts = load_image_label_from_file(dataroot, image_file_name, label_file_name)
 
     def __getitem__(self, index):
-        path = self.paths[index]
+        image_path = self.image_paths[index]
 
-        try:
-            image = Image.open(path).convert("L")  # grey-scale
-        except IOError:
-            print(f"Corrupted image for {index}")
-            print(path)
-            return self[index + 1]
+        # Read the image and convert it to grayscale
+        image = cv2.imread(image_path)
+        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # Scale to the size of the image that the model can accept
+        gray_image = cv2.resize(gray_image, (self.image_width, self.image_height), interpolation=cv2.INTER_CUBIC)
+        gray_image = np.reshape(gray_image, (self.image_height, self.image_width, 1))
 
-        image = image.resize((self.img_width, self.img_height), resample=Image.BILINEAR)
-        image = np.array(image)
-        image = image.reshape((1, self.img_height, self.img_width))
-        image = (image / 127.5) - 1.0
+        # Normalize and convert to Tensor format
+        gray_image = gray_image.astype(np.float32)
+        gray_image /= 255.
+        gray_image = (gray_image - self.mean) / self.std
+        gray_image = gray_image.transpose([2, 0, 1])
+        gray_tensor = torch.FloatTensor(gray_image)
 
-        image = torch.FloatTensor(image)
-        if self.texts:
-            text = self.texts[index]
-            target = [self.CHAR2LABEL[c] for c in text]
-            target_length = [len(target)]
+        # component file encoding
+        text = self.image_texts[index]
+        target = [self.labels_dict[c] for c in text]
+        target_length = [len(target)]
+        target_tensor = torch.LongTensor(target)
+        target_length_tensor = torch.LongTensor(target_length)
 
-            target = torch.LongTensor(target)
-            target_length = torch.LongTensor(target_length)
-            return image, target, target_length
-        else:
-            return image
+        return gray_tensor, target_tensor, target_length_tensor
 
     def __len__(self):
-        return len(self.paths)
+        return len(self.image_paths)
 
 
-def synth90k_collate_fn(batch):
-    images, targets, target_lengths = zip(*batch)
-    images = torch.stack(images, 0)
-    targets = torch.cat(targets, 0)
-    target_lengths = torch.cat(target_lengths, 0)
-    return images, targets, target_lengths
+def synth90k_collate_fn(batch: [torch.Tensor, torch.Tensor, torch.Tensor]) -> torch.Tensor:
+    gray_tensor, target_tensor, target_length_tensor = zip(*batch)
+    gray_tensor = torch.stack(gray_tensor, 0)
+    target_tensor = torch.cat(target_tensor, 0)
+    target_length_tensor = torch.cat(target_length_tensor, 0)
+
+    return gray_tensor, target_tensor, target_length_tensor

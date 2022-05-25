@@ -43,16 +43,17 @@ def _greedy_decode(sequence_log_prob: np.ndarray, blank: int = 0):
     return labels
 
 
-def ctc_decode(log_probs: torch.Tensor, label2char: dict = None, blank=0):
+def ctc_decode(log_probs: torch.Tensor, chars_dict: dict, blank=0):
     sequence_log_probs = np.transpose(log_probs.cpu().numpy(), (1, 0, 2))
 
     decoded_list = []
     for sequence_log_prob in sequence_log_probs:
         # Greedy algorithm to predict characters
-        decoded = _greedy_decode(sequence_log_prob, blank=blank)
+        decoded = _greedy_decode(sequence_log_prob, blank)
 
         # Decode the predicted character information into a whole string of information
-        if label2char:
-            decoded = [label2char[key] for key in decoded]
+        if chars_dict:
+            decoded = [chars_dict[key] for key in decoded]
         decoded_list.append(decoded)
+
     return decoded_list

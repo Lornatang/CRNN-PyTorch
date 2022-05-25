@@ -22,11 +22,26 @@ random.seed(0)
 torch.manual_seed(0)
 np.random.seed(0)
 # Use GPU for training by default
-device = torch.device("cuda", 2)
+device = torch.device("cuda", 0)
 # Turning on when the image size does not change during training can speed up training
 cudnn.benchmark = True
 # character to be recognized
 chars = "0123456789abcdefghijklmnopqrstuvwxyz"
+labels_dict = {char: i + 1 for i, char in enumerate(chars)}
+chars_dict = {label: char for char, label in labels_dict.items()}
+# Model parameter configuration
+model_num_classes = len(chars) + 1
+model_image_width = 100
+model_image_height = 32
+# Mean and std of the model input data source
+all_mean = 0.4639
+train_mean = 0.4639
+valid_mean = 0.4638
+test_mean = 0.4638
+all_std = 0.1422
+train_std = 0.4620
+valid_std = 0.1422
+test_std = 0.1423
 # Current configuration parameter method
 mode = "train"
 # Experiment name, easy to save weights and log files
@@ -34,13 +49,13 @@ exp_name = "CRNN"
 
 if mode == "train":
     # Dataset
-    # train_image_dir = f"data/DIV2K/DRLN/train"
-    # test_lr_image_dir = f"data/Set5/LRbicx{upscale_factor}"
-    # test_hr_image_dir = f"data/Set5/GTmod12"
+    dataroot = "data/90kDICT32px"
+    train_image_file_name = "annotation_test.txt"
+    valid_image_file_name = "annotation_valid.txt"
+    test_image_file_name = "annotation_test.txt"
+    label_image_file_name = "lexicon.txt"
 
-    image_width = 100
-    image_height = 32
-    batch_size = 1024
+    batch_size = 128
     num_workers = 4
 
     # Incremental training and migration training
@@ -56,9 +71,8 @@ if mode == "train":
     print_frequency = 200
 
 if mode == "valid":
-    # Test data address
-    lr_dir = f"data/Set5/LRbicx{upscale_factor}"
-    sr_dir = f"results/test/{exp_name}"
-    hr_dir = f"data/Set5/GTmod12"
+    dataroot = "data/90kDICT32px"
+    result_dir = "results/test"
+    result_name = "annotation_test.txt"
 
-    model_path = "results/pretrained_models/DRLN_BIX2-DIV2K-5346a619.pth.tar"
+    model_path = "results/pretrained_models/CRNN-Synth90k-xxxxxxxx.pth.tar"
