@@ -22,7 +22,7 @@ from torch.utils.data import Dataset, DataLoader
 
 def main(args):
     train_datasets = Synth90kDataset(dataroot=args.dataroot,
-                                     image_file_name=args.image_file_name,
+                                     annotation_file_name=args.annotation_file_name,
                                      image_width=args.image_width,
                                      image_height=args.image_height)
 
@@ -44,7 +44,7 @@ def main(args):
     mean_value = list(mean_value.numpy())
     std_value = list(std_value.numpy())
 
-    print(args.image_file_name)
+    print(args.annotation_file_name)
     print(f"Mean = {mean_value[0]:.4f}")
     print(f"Std  = {std_value[0]:.4f}")
 
@@ -65,13 +65,13 @@ def load_image_label_from_file(dataroot: str, image_file_name: str):
 class Synth90kDataset(Dataset):
     def __init__(self,
                  dataroot: str,
-                 image_file_name: str,
+                 annotation_file_name: str,
                  image_width: int,
                  image_height: int):
         self.image_width = image_width
         self.image_height = image_height
 
-        self.image_paths = load_image_label_from_file(dataroot, image_file_name)
+        self.image_paths = load_image_label_from_file(dataroot, annotation_file_name)
 
     def __getitem__(self, index: int) -> torch.Tensor:
         image_path = self.image_paths[index]
@@ -107,7 +107,7 @@ def synth90k_collate_fn(batch: [torch.Tensor, torch.Tensor, torch.Tensor]) -> to
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Calculate the mean and variance of a dataset.")
     parser.add_argument("--dataroot", type=str, help="Dataset root directory path.")
-    parser.add_argument("--image_file_name", type=str, help="txt file containing the path to the dataset file.")
+    parser.add_argument("--annotation_file_name", type=str, help="Txt file containing the path to the dataset file.")
     parser.add_argument("--image_width", type=int, help="The width of each image in the dataset.")
     parser.add_argument("--image_height", type=int, help="The height of each image in the dataset.")
     args = parser.parse_args()

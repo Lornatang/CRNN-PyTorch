@@ -13,20 +13,43 @@
 # ==============================================================================
 import os
 
-import numpy as np
 import torch
-from PIL import Image
-from natsort import natsorted
+from torch import nn
 from torch.nn import functional as F
+from torch.utils.data import DataLoader
 
 import config
+from dataset import Synth90kDataset, synth90k_collate_fn
 from decoder import ctc_decode
 from model import CRNN
 
 
-def main() -> None:
-    # Initialize model
-    model = CRNN(len(config.chars) + 1)
+def load_dataloader() -> DataLoader:
+    # Load datasets
+    datasets = Synth90kDataset(dataroot=config.dataroot,
+                               annotation_file_name=config.annotation_file_name,
+                               label_file_name=config.label_file_name,
+                               labels_dict=config.labels_dict,
+                               image_width=config.model_image_width,
+                               image_height=config.model_image_height,
+                               mean=config.all_mean,
+                               std=config.all_std)
+
+    dataloader = DataLoader(dataset=datasets,
+                            batch_size=1,
+                            shuffle=False,
+                            num_workers=1,
+                            collate_fn=synth90k_collate_fn,
+                            pin_memory=True,
+                            drop_last=False,
+                            persistent_workers=True)
+
+    return dataloader
+
+
+def build_model() -> nn.Module:
+    # Initialize the model
+    model = CRNN(config.model_num_classes)
     model = model.to(device=config.device)
     print("Build CRNN model successfully.")
 
@@ -35,64 +58,63 @@ def main() -> None:
     model.load_state_dict(checkpoint["state_dict"])
     print(f"Load CRNN model weights `{os.path.abspath(config.model_path)}` successfully.")
 
+    # Start the verification mode of the model.
+    model.eval()
+
+    if config.fp16:
+        # Turn on half-precision inference.
+        model.half()
+
+    return model
+
+
+def main() -> None:
+    # Initialize correct predictions image number
+    total_correct = 0
+
+    # Initialize model
+    model = build_model()
+
+    # Load test dataLoader
+    dataloader = load_dataloader()
+
     # Create a experiment folder results
     if not os.path.exists(config.result_dir):
         os.makedirs(config.result_dir)
 
-    # Start the verification mode of the model.
-    model.eval()
-    # Turn on half-precision inference.
-    model.half()
-
-    # Initialize correct predictions image number
-    total_correct = 0.0
-
-    # Get a list of test image file names.
-    file_names = natsorted(os.listdir(config.dataroot))
-    # Get the number of test image files.
-    total_files = len(file_names)
+    # Get the number of test image files
+    total_files = len(dataloader)
 
     with open(os.path.join(config.result_dir, config.result_name), "w") as f:
-        for index in range(total_files):
-            with torch.no_grad():
-                image_path = os.path.join(config.dataroot, file_names[index])
-
-                print(f"Processing `{os.path.abspath(image_path)}`...")
-                # Read OCR image
-                image = Image.open(image_path).convert("L")
-
-                # Image convert Tensor
-                image = image.resize((config.model_image_width, config.model_image_height), resample=Image.BILINEAR)
-                image = np.array(image)
-                image = image.reshape((1, 1, config.model_image_height, config.model_image_width))
-                # Normalize [0, 255] to [-1, 1]
-                image = (image / 127.5) - 1.0
-                tensor = torch.Tensor(image)
-
+        with torch.no_grad():
+            for batch_index, (image_path, images, labels, labels_length) in enumerate(dataloader):
                 # Transfer in-memory data to CUDA devices to speed up training
-                tensor = tensor.to(device=config.device)
-                tensor = tensor.half()
+                images = images.to(device=config.device, non_blocking=True)
+                labels = labels.to(device=config.device, non_blocking=True)
+                labels_length = labels_length.to(device=config.device, non_blocking=True)
 
-                # predict characters
-                output = model(tensor)
+                if config.fp16:
+                    # Convert to FP16
+                    images = images.half()
 
-                # Compare the similarity between predicted and actual characters
+                # Inference
+                output = model(images)
+
+                # record accuracy
                 output_probs = F.log_softmax(output, 2)
-                predictions = ctc_decode(output_probs, config.chars_dict)
-                # target = target.cpu().numpy().tolist()
-                # target_lengths = target_lengths.cpu().numpy().tolist()
-                #
-                # target_length_counter = 0
-                # for prediction, target_length in zip(predictions, target_lengths):
-                #     target = target[target_length_counter:target_length_counter + target_length]
-                #     target_length_counter += target_length
-                #     # If the text in the image is successfully predicted,
-                #     # add 1 to the number of accurately predicted images
-                #     if prediction == target:
-                #         total_correct += 1
+                prediction_labels, prediction_chars = ctc_decode(output_probs, config.chars_dict)
+                labels = labels.cpu().numpy().tolist()
+                labels_length = labels_length.cpu().numpy().tolist()
 
-                if index < total_files - 1:
-                    f.write(f"{image_path} -> {''.join(predictions[0])}\n")
+                labels_length_counter = 0
+                for prediction_label, label_length in zip(prediction_labels, labels_length):
+                    label = labels[labels_length_counter:labels_length_counter + label_length]
+                    labels_length_counter += label_length
+                    if prediction_label == label:
+                        total_correct += 1
+
+                if batch_index < total_files - 1:
+                    f.write(f"{image_path} -> {''.join(prediction_chars[0])}\n")
                 else:
                     f.write(f"Accuracy: {total_correct / total_files * 100:.2f}%")
 

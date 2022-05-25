@@ -19,7 +19,7 @@ import torch
 from torch.utils.data import Dataset
 
 
-def load_image_label_from_file(dataroot: str, image_file_name: str, label_file_name: str):
+def load_image_label_from_file(dataroot: str, annotation_file_name: str, label_file_name: str):
     # Initialize the definition of image path, image text information, etc.
     labels_map = {}
     image_paths = []
@@ -31,7 +31,7 @@ def load_image_label_from_file(dataroot: str, image_file_name: str, label_file_n
             labels_map[i] = line.strip()
 
     # Read image path and corresponding text information
-    with open(os.path.join(dataroot, image_file_name), "r") as f:
+    with open(os.path.join(dataroot, annotation_file_name), "r") as f:
         for line in f.readlines():
             path, index = line.strip().split(" ")
             text = labels_map[int(index)]
@@ -44,7 +44,7 @@ def load_image_label_from_file(dataroot: str, image_file_name: str, label_file_n
 class Synth90kDataset(Dataset):
     def __init__(self,
                  dataroot: str,
-                 image_file_name: str,
+                 annotation_file_name: str,
                  label_file_name: str,
                  labels_dict: dict,
                  image_width: int,
@@ -57,9 +57,9 @@ class Synth90kDataset(Dataset):
         self.mean = mean
         self.std = std
 
-        self.image_paths, self.image_texts = load_image_label_from_file(dataroot, image_file_name, label_file_name)
+        self.image_paths, self.image_texts = load_image_label_from_file(dataroot, annotation_file_name, label_file_name)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> [str, torch.Tensor, torch.Tensor, torch.Tensor]:
         image_path = self.image_paths[index]
 
         # Read the image and convert it to grayscale
@@ -78,21 +78,21 @@ class Synth90kDataset(Dataset):
 
         # component file encoding
         text = self.image_texts[index]
-        target = [self.labels_dict[c] for c in text]
-        target_length = [len(target)]
-        target_tensor = torch.LongTensor(target)
-        target_length_tensor = torch.LongTensor(target_length)
+        labels = [self.labels_dict[c] for c in text]
+        labels_length = [len(labels)]
+        labels_tensor = torch.LongTensor(labels)
+        labels_length_tensor = torch.LongTensor(labels_length)
 
-        return gray_tensor, target_tensor, target_length_tensor
+        return image_path, gray_tensor, labels_tensor, labels_length_tensor
 
     def __len__(self):
         return len(self.image_paths)
 
 
-def synth90k_collate_fn(batch: [torch.Tensor, torch.Tensor, torch.Tensor]) -> torch.Tensor:
-    gray_tensor, target_tensor, target_length_tensor = zip(*batch)
+def synth90k_collate_fn(batch: [str, torch.Tensor, torch.Tensor, torch.Tensor]) -> torch.Tensor:
+    image_path, gray_tensor, labels_tensor, labels_length_tensor = zip(*batch)
     gray_tensor = torch.stack(gray_tensor, 0)
-    target_tensor = torch.cat(target_tensor, 0)
-    target_length_tensor = torch.cat(target_length_tensor, 0)
+    labels_tensor = torch.cat(labels_tensor, 0)
+    labels_length_tensor = torch.cat(labels_length_tensor, 0)
 
-    return gray_tensor, target_tensor, target_length_tensor
+    return image_path, gray_tensor, labels_tensor, labels_length_tensor

@@ -50,10 +50,9 @@ exp_name = "CRNN"
 if mode == "train":
     # Dataset
     dataroot = "data/90kDICT32px"
-    train_image_file_name = "annotation_test.txt"
-    valid_image_file_name = "annotation_valid.txt"
-    test_image_file_name = "annotation_test.txt"
-    label_image_file_name = "lexicon.txt"
+    annotation_train_file_name = "annotation_train.txt"
+    annotation_valid_file_name = "annotation_valid.txt"
+    label_file_name = "lexicon.txt"
 
     batch_size = 128
     num_workers = 4
@@ -71,8 +70,16 @@ if mode == "train":
     print_frequency = 200
 
 if mode == "valid":
-    dataroot = "data/90kDICT32px"
+    # Whether to enable half-precision inference
+    fp16 = True
+
+    # The path and name of the folder where the verification results are saved
     result_dir = "results/test"
     result_name = "annotation_test.txt"
+
+    # The directory path where the dataset to be verified is located
+    dataroot = "data/90kDICT32px"
+    annotation_file_name = "annotation_test.txt"
+    label_file_name = "lexicon.txt"
 
     model_path = "results/pretrained_models/CRNN-Synth90k-xxxxxxxx.pth.tar"

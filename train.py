@@ -43,7 +43,7 @@ def main():
     model = build_model()
     print("Build CRNN model successfully.")
 
-    pixel_criterion = define_loss()
+    criterion = define_loss()
     print("Define all loss functions successfully.")
 
     optimizer = define_optimizer(model)
@@ -81,7 +81,7 @@ def main():
     scaler = amp.GradScaler()
 
     for epoch in range(start_epoch, config.epochs):
-        train(model, train_dataloader, pixel_criterion, optimizer, epoch, scaler, writer)
+        train(model, train_dataloader, criterion, optimizer, epoch, scaler, writer)
         acc = validate(model, test_dataloader, epoch, writer, "Valid")
         print("\n")
 
@@ -104,16 +104,16 @@ def main():
 def load_dataset() -> [DataLoader, DataLoader]:
     # Load train, test and valid datasets
     train_datasets = Synth90kDataset(dataroot=config.dataroot,
-                                     image_file_name=config.train_image_file_name,
-                                     label_file_name=config.label_image_file_name,
+                                     annotation_file_name=config.annotation_train_file_name,
+                                     label_file_name=config.label_file_name,
                                      labels_dict=config.labels_dict,
                                      image_width=config.model_image_width,
                                      image_height=config.model_image_height,
                                      mean=config.all_mean,
                                      std=config.all_std)
     valid_datasets = Synth90kDataset(dataroot=config.dataroot,
-                                     image_file_name=config.valid_image_file_name,
-                                     label_file_name=config.label_image_file_name,
+                                     annotation_file_name=config.annotation_valid_file_name,
+                                     label_file_name=config.label_file_name,
                                      labels_dict=config.labels_dict,
                                      image_width=config.model_image_width,
                                      image_height=config.model_image_height,
@@ -258,24 +258,27 @@ def validate(model: nn.Module,
     # Calculate how many batches of data are in each Epoch
     batches = len(dataloader)
     batch_time = AverageMeter("Time", ":6.3f")
-    accuracy = AverageMeter("Accuracy", ":4.2f")
+    accuracy = AverageMeter("Accuracy", ":4.2f", Summary.NONE)
     progress = ProgressMeter(len(dataloader), [batch_time, accuracy], prefix=f"{mode}: ")
 
     # Put the adversarial network model in validation mode
     model.eval()
 
+    # Initialize correct predictions image number
+    total_correct = 0
+
     # Get the initialization test time
     end = time.time()
 
     with torch.no_grad():
-        for batch_index, (images, target, target_lengths) in enumerate(dataloader):
+        for batch_index, (_, images, labels, labels_length) in enumerate(dataloader):
             # Get the number of data in the current batch
             curren_batch_size = images.size(0)
 
             # Transfer in-memory data to CUDA devices to speed up training
             images = images.to(device=config.device, non_blocking=True)
-            target = target.to(device=config.device, non_blocking=True)
-            target_lengths = target_lengths.to(device=config.device, non_blocking=True)
+            labels = labels.to(device=config.device, non_blocking=True)
+            labels_length = labels_length.to(device=config.device, non_blocking=True)
 
             # Mixed precision testing
             with amp.autocast():
@@ -283,36 +286,36 @@ def validate(model: nn.Module,
 
             # record accuracy
             output_probs = F.log_softmax(output, 2)
-            predictions = ctc_decode(output_probs)
-            target = target.cpu().numpy().tolist()
-            target_lengths = target_lengths.cpu().numpy().tolist()
+            prediction_labels, _ = ctc_decode(output_probs, config.chars_dict)
+            labels = labels.cpu().numpy().tolist()
+            labels_length = labels_length.cpu().numpy().tolist()
 
-            target_length_counter = 0
-            for prediction, target_length in zip(predictions, target_lengths):
-                target = target[target_length_counter:target_length_counter + target_length]
-                target_length_counter += target_length
-                if prediction == target:
-                    accuracy.update(1, curren_batch_size)
-                else:
-                    accuracy.update(0, curren_batch_size)
+            labels_length_counter = 0
+            for prediction_label, label_length in zip(prediction_labels, labels_length):
+                label = labels[labels_length_counter:labels_length_counter + label_length]
+                labels_length_counter += label_length
+                if prediction_label == label:
+                    total_correct += 1
+
+            accuracy.update(total_correct / batches, curren_batch_size)
 
             # Calculate the time it takes to fully test a batch of data
             batch_time.update(time.time() - end)
             end = time.time()
 
             # Record training log information
-            if batch_index % (batches // 5) == 0:
+            if batch_index % 1 == 0:
                 progress.display(batch_index)
 
     # print metrics
     progress.display_summary()
 
     if mode == "Valid" or mode == "Test":
-        writer.add_scalar(f"{mode}/Accuracy", accuracy.avg, epoch + 1)
+        writer.add_scalar(f"{mode}/Accuracy", accuracy.val, epoch + 1)
     else:
         raise ValueError("Unsupported mode, please use `Valid` or `Test`.")
 
-    return accuracy.avg
+    return accuracy.val
 
 
 class Summary(Enum):
@@ -323,7 +326,7 @@ class Summary(Enum):
 
 
 class AverageMeter(object):
-    def __init__(self, name, fmt=":f", summary_type=Summary.AVERAGE):
+    def __init__(self, name, fmt=":f", summary_type=Summary.NONE):
         self.name = name
         self.fmt = fmt
         self.summary_type = summary_type
@@ -342,7 +345,7 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
     def __str__(self):
-        fmtstr = "{name} {val" + self.fmt + "} ({avg" + self.fmt + "})"
+        fmtstr = "{name} {val" + self.fmt + "}"
         return fmtstr.format(**self.__dict__)
 
     def summary(self):

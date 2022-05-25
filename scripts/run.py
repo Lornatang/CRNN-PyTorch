@@ -16,31 +16,27 @@ import os
 # Calculate the mean and variance of all dataset scripts
 os.system("python ./calculate_image_mean_and_std.py "
           "--dataroot ../data/90kDICT32px/ "
-          "--image_file_name annotation.txt "
+          "--annotation_file_name annotation.txt "
           "--image_width 100 "
           "--image_height 32")
 
-<<<<<<< Updated upstream
-# # Calculate the mean and variance of a train dataset scripts
-=======
-# Calculate the mean and variance of a train dataset scripts
->>>>>>> Stashed changes
+# Calculate the mean and variance of a train scripts
 os.system("python ./calculate_image_mean_and_std.py "
           "--dataroot ../data/90kDICT32px/ "
-          "--image_file_name annotation_train.txt "
+          "--annotation_file_name annotation_train.txt "
           "--image_width 100 "
           "--image_height 32")
 
 # Calculate the mean and variance of a valid dataset scripts
 os.system("python ./calculate_image_mean_and_std.py "
           "--dataroot ../data/90kDICT32px/ "
-          "--image_file_name annotation_valid.txt "
+          "--annotation_file_name annotation_valid.txt "
           "--image_width 100 "
           "--image_height 32")
 
 # Calculate the mean and variance of a test dataset scripts
 os.system("python ./calculate_image_mean_and_std.py "
           "--dataroot ../data/90kDICT32px/ "
-          "--image_file_name annotation_test.txt "
+          "--annotation_file_name annotation_test.txt "
           "--image_width 100 "
           "--image_height 32")
