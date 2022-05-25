@@ -195,7 +195,7 @@ def train(model: nn.Module,
     # Get the initialization training time
     end = time.time()
 
-    for batch_index, (images, target, target_lengths) in enumerate(train_dataloader):
+    for batch_index, (_, images, labels, labels_length) in enumerate(train_dataloader):
         # Calculate the time it takes to load a batch of data
         data_time.update(time.time() - end)
 
@@ -204,8 +204,8 @@ def train(model: nn.Module,
 
         # Transfer in-memory data to CUDA devices to speed up training
         images = images.to(device=config.device, non_blocking=True)
-        target = target.to(device=config.device, non_blocking=True)
-        target_lengths = target_lengths.to(device=config.device, non_blocking=True)
+        labels = labels.to(device=config.device, non_blocking=True)
+        labels_length = labels_length.to(device=config.device, non_blocking=True)
 
         # Initialize generator gradients
         model.zero_grad(set_to_none=True)
@@ -216,9 +216,9 @@ def train(model: nn.Module,
 
             output_probs = F.log_softmax(output, 2)
             images_lengths = torch.LongTensor([output.size(0)] * curren_batch_size)
-            target_lengths = torch.flatten(target_lengths)
+            labels_length = torch.flatten(labels_length)
 
-            loss = criterion(output_probs, target, images_lengths, target_lengths) / curren_batch_size
+            loss = criterion(output_probs, labels, images_lengths, labels_length) / curren_batch_size
 
         # Backpropagation
         scaler.scale(loss).backward()
