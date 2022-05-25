@@ -150,7 +150,7 @@ def build_model() -> nn.Module:
 
 
 def define_loss() -> nn.CTCLoss:
-    criterion = nn.CTCLoss(reduction="sum")
+    criterion = nn.CTCLoss()
     criterion = criterion.to(device=config.device)
 
     return criterion
