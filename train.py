@@ -304,7 +304,7 @@ def validate(model: nn.Module,
             end = time.time()
 
             # Record training log information
-            if batch_index % 1 == 0:
+            if batch_index % (batches // 5) == 0:
                 progress.display(batch_index)
 
     # print metrics
