@@ -79,13 +79,13 @@ def main() -> None:
     dataloader = load_dataloader()
 
     # Create a experiment folder results
-    if not os.path.exists(config.result_dir):
-        os.makedirs(config.result_dir)
+    if not os.path.exists(config.validate_result_dir):
+        os.makedirs(config.validate_result_dir)
 
     # Get the number of test image files
     total_files = len(dataloader)
 
-    with open(os.path.join(config.result_dir, config.result_name), "w") as f:
+    with open(os.path.join(config.validate_result_dir, config.validate_result_file_name), "w") as f:
         with torch.no_grad():
             for batch_index, (image_path, images, labels, labels_length) in enumerate(dataloader):
                 # Transfer in-memory data to CUDA devices to speed up training
@@ -117,7 +117,7 @@ def main() -> None:
                     information = f"{image_path[0]} -> {''.join(prediction_chars[0])}"
                     print(information)
                 else:
-                    information = f"Accuracy: {total_correct / total_files * 100:.2f}%"
+                    information = f"Acc: {total_correct / total_files * 100:.2f}%"
                     print(information)
 
                 # Text information to be written to the file
