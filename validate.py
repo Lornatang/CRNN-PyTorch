@@ -114,9 +114,14 @@ def main() -> None:
                         total_correct += 1
 
                 if batch_index < total_files - 1:
-                    f.write(f"{image_path} -> {''.join(prediction_chars[0])}\n")
+                    information = f"{image_path[0]} -> {''.join(prediction_chars[0])}"
+                    print(information)
                 else:
-                    f.write(f"Accuracy: {total_correct / total_files * 100:.2f}%")
+                    information = f"Accuracy: {total_correct / total_files * 100:.2f}%"
+                    print(information)
+
+                # Text information to be written to the file
+                f.write(information + "\n")
 
 
 if __name__ == "__main__":
