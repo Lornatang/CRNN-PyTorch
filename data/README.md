@@ -11,7 +11,7 @@ Contains ICDAR2013~2019, Synth90k, Synth800k, SynthText, Verisimilar Synthesis, 
 
 ```text
 # Dataset struct
-- 90kDICT32px
+- Synth90k
     - 1
     - 2
     - 3
