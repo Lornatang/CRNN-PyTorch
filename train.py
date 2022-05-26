@@ -37,7 +37,7 @@ def main():
     # Initialize training network evaluation indicators
     best_acc = 0.0
 
-    train_dataloader, test_dataloader = load_dataset()
+    train_dataloader, valid_dataloader = load_dataset()
     print("Load all datasets successfully.")
 
     model = build_model()
@@ -82,7 +82,7 @@ def main():
 
     for epoch in range(start_epoch, config.epochs):
         train(model, train_dataloader, criterion, optimizer, epoch, scaler, writer)
-        acc = validate(model, test_dataloader, epoch, writer, "Valid")
+        acc = validate(model, valid_dataloader, epoch, writer, "Valid")
         print("\n")
 
         # Automatically save the model with the highest index
@@ -256,17 +256,18 @@ def validate(model: nn.Module,
         mode (str): test validation dataset accuracy or test dataset accuracy
 
     """
-    # Get the number of test image files
-    total_files = len(dataloader)
-
     # Put the adversarial network model in validation mode
     model.eval()
 
     # Initialize correct predictions image number
     total_correct = 0
+    total_files = 0
 
     with torch.no_grad():
         for batch_index, (_, images, labels, labels_length) in enumerate(dataloader):
+            # Get how many data the current batch has and increase the total number of tests
+            total_files += images.size(0)
+
             # Transfer in-memory data to CUDA devices to speed up training
             images = images.to(device=config.device, non_blocking=True)
             labels = labels.to(device=config.device, non_blocking=True)
