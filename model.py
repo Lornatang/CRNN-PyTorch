@@ -44,29 +44,29 @@ class CRNN(nn.Module):
         self.convolutional_layers = nn.Sequential(
             nn.Conv2d(1, 64, (3, 3), (1, 1), (1, 1), bias=True),
             nn.ReLU(True),
-            nn.MaxPool2d((2, 2), (2, 2)),  # [16, 64, 16, _]
+            nn.MaxPool2d((2, 2), (2, 2)),  # image size: 16 * 64
 
             nn.Conv2d(64, 128, (3, 3), (1, 1), (1, 1), bias=True),
             nn.ReLU(True),
-            nn.MaxPool2d((2, 2), (2, 2)),  # [16, 128, 8, _]
+            nn.MaxPool2d((2, 2), (2, 2)),  # image size: 8 * 32
 
             nn.Conv2d(128, 256, (3, 3), (1, 1), (1, 1), bias=False),
             nn.BatchNorm2d(256),
             nn.ReLU(True),
             nn.Conv2d(256, 256, (3, 3), (1, 1), (1, 1), bias=True),
             nn.ReLU(True),
-            nn.MaxPool2d((2, 2), (2, 1), (0, 1)),  # [16, 256, 4, _]
+            nn.MaxPool2d((2, 2), (2, 1), (0, 1)),  # image size: 4 x 16
 
             nn.Conv2d(256, 512, (3, 3), (1, 1), (1, 1), bias=False),
             nn.BatchNorm2d(512),
             nn.ReLU(True),
             nn.Conv2d(512, 512, (3, 3), (1, 1), (1, 1), bias=True),
             nn.ReLU(True),
-            nn.MaxPool2d((2, 2), (2, 1), (0, 1)),  # [16, 512, 2, _]
+            nn.MaxPool2d((2, 2), (2, 1), (0, 1)),  # image size: 2 x 16
 
             nn.Conv2d(512, 512, (2, 2), (1, 1), (0, 0), bias=False),
             nn.BatchNorm2d(512),
-            nn.ReLU(True),  # [16, 512, 1, _]
+            nn.ReLU(True),  # image size: 1 x 16
         )
 
         self.recurrent_layers = nn.Sequential(

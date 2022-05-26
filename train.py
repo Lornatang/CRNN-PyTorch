@@ -156,8 +156,8 @@ def define_loss() -> nn.CTCLoss:
     return criterion
 
 
-def define_optimizer(model) -> optim.Adam:
-    optimizer = optim.Adadelta(model.parameters(), config.model_lr)
+def define_optimizer(model) -> optim.RMSprop:
+    optimizer = optim.RMSprop(model.parameters(), config.model_lr)
 
     return optimizer
 
@@ -218,6 +218,7 @@ def train(model: nn.Module,
             images_lengths = torch.LongTensor([output.size(0)] * curren_batch_size)
             labels_length = torch.flatten(labels_length)
 
+            # Computational loss
             loss = criterion(output_probs, labels, images_lengths, labels_length) / curren_batch_size
 
         # Backpropagation

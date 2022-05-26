@@ -39,7 +39,7 @@ train_mean = 0.4639
 valid_mean = 0.4638
 test_mean = 0.4638
 all_std = 0.1422
-train_std = 0.4620
+train_std = 0.1420
 valid_std = 0.1422
 test_std = 0.1423
 # Current configuration parameter method
@@ -54,17 +54,17 @@ if mode == "train":
     annotation_valid_file_name = "annotation_valid.txt"
     label_file_name = "lexicon.txt"
 
-    batch_size = 64
+    batch_size = 128
     num_workers = 4
 
     # Incremental training and migration training
     resume = ""
 
     # Total num epochs
-    epochs = 25
+    epochs = 128
 
     # RMSprop optimizer parameter
-    model_lr = 1e-2
+    model_lr = 5e-4
 
     # How many iterations to print the training result
     print_frequency = 200
