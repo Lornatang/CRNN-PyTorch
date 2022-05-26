@@ -292,7 +292,7 @@ def validate(model: nn.Module,
 
     # print metrics
     acc = (total_correct / total_files) * 100
-    print(f"Acc: {acc:.2f}%")
+    print(f"* Acc: {acc:.2f}%")
 
     if mode == "Valid" or mode == "Test":
         writer.add_scalar(f"{mode}/Acc", acc, epoch + 1)
