@@ -267,7 +267,6 @@ def validate(model: nn.Module,
 
     # Initialize correct predictions image number
     total_correct = 0
-    total_files = 0
 
     # Get the initialization test time
     end = time.time()
