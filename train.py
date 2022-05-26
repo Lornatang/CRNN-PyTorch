@@ -291,15 +291,15 @@ def validate(model: nn.Module,
                     total_correct += 1
 
     # print metrics
-    accuracy = (total_correct / total_files) * 100
-    print(f"Accuracy: {accuracy:.2f}%")
+    acc = (total_correct / total_files) * 100
+    print(f"Acc: {acc:.2f}%")
 
     if mode == "Valid" or mode == "Test":
-        writer.add_scalar(f"{mode}/Accuracy", accuracy, epoch + 1)
+        writer.add_scalar(f"{mode}/Acc", acc, epoch + 1)
     else:
         raise ValueError("Unsupported mode, please use `Valid` or `Test`.")
 
-    return accuracy
+    return acc
 
 
 class Summary(Enum):
