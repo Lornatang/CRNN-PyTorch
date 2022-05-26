@@ -75,7 +75,7 @@ if mode == "valid":
 
     # The path and name of the folder where the verification results are saved
     validate_result_dir = "results/test"
-    validate_result_file_name = "annotation_test.txt"
+    validate_result_file_name = "Synth90k_test_result.txt"
 
     # The directory path where the dataset to be verified is located
     dataroot = "data/Synth90k"
