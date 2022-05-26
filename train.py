@@ -256,11 +256,8 @@ def validate(model: nn.Module,
         mode (str): test validation dataset accuracy or test dataset accuracy
 
     """
-    # Calculate how many batches of data are in each Epoch
-    batches = len(dataloader)
-    batch_time = AverageMeter("Time", ":6.3f")
-    accuracy = AverageMeter("Accuracy", ":4.2f")
-    progress = ProgressMeter(len(dataloader), [batch_time, accuracy], prefix=f"{mode}: ")
+    # Get the number of test image files
+    total_files = len(dataloader)
 
     # Put the adversarial network model in validation mode
     model.eval()
@@ -268,17 +265,8 @@ def validate(model: nn.Module,
     # Initialize correct predictions image number
     total_correct = 0
 
-    # Get the initialization test time
-    end = time.time()
-
     with torch.no_grad():
         for batch_index, (_, images, labels, labels_length) in enumerate(dataloader):
-            # Get the number of data in the current batch
-            curren_batch_size = images.size(0)
-
-            # Increase the number of test images
-            total_files = (curren_batch_size + 1) * batches
-
             # Transfer in-memory data to CUDA devices to speed up training
             images = images.to(device=config.device, non_blocking=True)
             labels = labels.to(device=config.device, non_blocking=True)
@@ -301,26 +289,16 @@ def validate(model: nn.Module,
                 if prediction_label == label:
                     total_correct += 1
 
-            # Statistical Model Accuracy
-            accuracy.update((total_correct / total_files) * 100, curren_batch_size)
-
-            # Calculate the time it takes to fully test a batch of data
-            batch_time.update(time.time() - end)
-            end = time.time()
-
-            # Record training log information
-            if batch_index % (batches // 5) == 0:
-                progress.display(batch_index)
-
     # print metrics
-    progress.display_summary()
+    accuracy = (total_correct / total_files) * 100
+    print(f"Accuracy: {accuracy:.2f}%")
 
     if mode == "Valid" or mode == "Test":
-        writer.add_scalar(f"{mode}/Accuracy", accuracy.avg, epoch + 1)
+        writer.add_scalar(f"{mode}/Accuracy", accuracy, epoch + 1)
     else:
         raise ValueError("Unsupported mode, please use `Valid` or `Test`.")
 
-    return accuracy.avg
+    return accuracy
 
 
 class Summary(Enum):
