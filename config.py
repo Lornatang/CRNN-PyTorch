@@ -49,22 +49,22 @@ exp_name = "CRNN"
 
 if mode == "train":
     # Dataset
-    dataroot = "data/90kDICT32px"
+    dataroot = "data/Synth90k"
     annotation_train_file_name = "annotation_train.txt"
     annotation_valid_file_name = "annotation_valid.txt"
     label_file_name = "lexicon.txt"
 
-    batch_size = 128
+    batch_size = 64
     num_workers = 4
 
     # Incremental training and migration training
     resume = ""
 
     # Total num epochs
-    epochs = 250
+    epochs = 25
 
     # RMSprop optimizer parameter
-    model_lr = 5e-4
+    model_lr = 1e-2
 
     # How many iterations to print the training result
     print_frequency = 200
@@ -78,7 +78,7 @@ if mode == "valid":
     result_name = "annotation_test.txt"
 
     # The directory path where the dataset to be verified is located
-    dataroot = "data/90kDICT32px"
+    dataroot = "data/Synth90k"
     annotation_file_name = "annotation_test.txt"
     label_file_name = "lexicon.txt"
 

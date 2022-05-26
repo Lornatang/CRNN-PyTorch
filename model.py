@@ -74,6 +74,9 @@ class CRNN(nn.Module):
             _BidirectionalLSTM(256, 256, num_classes),
         )
 
+        # Initialize model weights
+        self._initialize_weights()
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # Feature sequence
         features = self.convolutional_layers(x)  # [b, c, h, w]
@@ -84,3 +87,12 @@ class CRNN(nn.Module):
         out = self.recurrent_layers(features)
 
         return out
+
+    def _initialize_weights(self) -> None:
+        for module in self.modules():
+            if isinstance(module, nn.Conv2d):
+                nn.init.kaiming_normal_(module.weight)
+                if module.bias is not None:
+                    nn.init.constant_(module.bias, 0)
+            elif isinstance(module, nn.BatchNorm2d):
+                nn.init.constant_(module.weight, 1)

@@ -150,7 +150,7 @@ def build_model() -> nn.Module:
 
 
 def define_loss() -> nn.CTCLoss:
-    criterion = nn.CTCLoss()
+    criterion = nn.CTCLoss(reduction="sum")
     criterion = criterion.to(device=config.device)
 
     return criterion
@@ -258,7 +258,7 @@ def validate(model: nn.Module,
     # Calculate how many batches of data are in each Epoch
     batches = len(dataloader)
     batch_time = AverageMeter("Time", ":6.3f")
-    accuracy = AverageMeter("Accuracy", ":4.2f", Summary.NONE)
+    accuracy = AverageMeter("Accuracy", ":4.2f")
     progress = ProgressMeter(len(dataloader), [batch_time, accuracy], prefix=f"{mode}: ")
 
     # Put the adversarial network model in validation mode
@@ -266,6 +266,7 @@ def validate(model: nn.Module,
 
     # Initialize correct predictions image number
     total_correct = 0
+    total_files = 0
 
     # Get the initialization test time
     end = time.time()
@@ -274,6 +275,9 @@ def validate(model: nn.Module,
         for batch_index, (_, images, labels, labels_length) in enumerate(dataloader):
             # Get the number of data in the current batch
             curren_batch_size = images.size(0)
+
+            # Increase the number of test images
+            total_files = (curren_batch_size + 1) * batches
 
             # Transfer in-memory data to CUDA devices to speed up training
             images = images.to(device=config.device, non_blocking=True)
@@ -297,7 +301,8 @@ def validate(model: nn.Module,
                 if prediction_label == label:
                     total_correct += 1
 
-            accuracy.update(total_correct / batches, curren_batch_size)
+            # Statistical Model Accuracy
+            accuracy.update((total_correct / total_files) * 100, curren_batch_size)
 
             # Calculate the time it takes to fully test a batch of data
             batch_time.update(time.time() - end)
@@ -311,11 +316,11 @@ def validate(model: nn.Module,
     progress.display_summary()
 
     if mode == "Valid" or mode == "Test":
-        writer.add_scalar(f"{mode}/Accuracy", accuracy.val, epoch + 1)
+        writer.add_scalar(f"{mode}/Accuracy", accuracy.avg, epoch + 1)
     else:
         raise ValueError("Unsupported mode, please use `Valid` or `Test`.")
 
-    return accuracy.val
+    return accuracy.avg
 
 
 class Summary(Enum):
@@ -326,7 +331,7 @@ class Summary(Enum):
 
 
 class AverageMeter(object):
-    def __init__(self, name, fmt=":f", summary_type=Summary.NONE):
+    def __init__(self, name, fmt=":f", summary_type=Summary.AVERAGE):
         self.name = name
         self.fmt = fmt
         self.summary_type = summary_type
@@ -345,7 +350,7 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
     def __str__(self):
-        fmtstr = "{name} {val" + self.fmt + "}"
+        fmtstr = "{name} {val" + self.fmt + "} ({avg" + self.fmt + "})"
         return fmtstr.format(**self.__dict__)
 
     def summary(self):
