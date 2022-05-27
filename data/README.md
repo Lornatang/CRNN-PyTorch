@@ -54,7 +54,7 @@ Finally, you will get a directory structure like this under this directory.
 ## Special attention
 
 Mean and std in the dataset.
-*The following numerical calculations are derived from the `scripts/run.py` file*
+*The following numerical calculations are derived from the `<CRNN-PyTorch-main>/scripts/run.py` file*
 
 ### Synth90k
 
