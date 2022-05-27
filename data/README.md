@@ -7,7 +7,34 @@ Contains ICDAR2013~2019, Synth90k, Synth800k, SynthText, Verisimilar Synthesis, 
 - [Google Driver](https://drive.google.com/drive/folders/1dxrLQ48UodaLavqFHMimiYkuqtfufyrI?usp=sharing)
 - [Baidu Driver](https://pan.baidu.com/s/1v4urOutexChkzhLYiOD0QA?pwd=llot)
 
-## Step2: Prepare the dataset in the following format
+## (Optional) Step2: Custom generated character image data
+
+First, Go to the `<CRNN-PyTorch-main>/scirpts/TextDataGenerator` folder.
+
+Then, Place the data in the following directory structure. run `auto_generator.py`.
+
+```text
+- TextDataGenerator
+    - background_images  # Folder for background images
+    - dicts  # Folder for label files
+    - fonts  # Folder for all fonts
+    - auto_generator.py  # Program files for automatic generation of character images and annotations
+```
+
+Finally, you will get a directory structure like this under this directory.
+
+```text
+- output
+    - 00000  # Folder containing character images
+    - 00001
+    - ...
+    - annotations.txt  # Text file with image path and annotation information
+    - dict.txt  # Arrangement and combination file of custom characters
+```
+
+*Don't forget to modify `<CRNN-PyTorch-main>/config.py` file~~~*
+
+## Step3: Prepare the dataset in the following format (e.g Synth90K)
 
 ```text
 # Dataset struct
@@ -38,7 +65,7 @@ std = 0.1422
 
 # train dataset
 mean = 0.4639
-std = 0.4620
+std = 0.1420
 
 # valid dataset
 mean = 0.4638
