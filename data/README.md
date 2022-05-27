@@ -28,7 +28,7 @@ Finally, you will get a directory structure like this under this directory.
     - 00000  # Folder containing character images
     - 00001
     - ...
-    - annotations.txt  # Text file with image path and annotation information
+    - annotation.txt  # Text file with image path and annotation information
     - dict.txt  # Arrangement and combination file of custom characters
 ```
 
