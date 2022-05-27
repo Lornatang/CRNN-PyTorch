@@ -1,3 +1,4 @@
+natsort
 opencv-python
 numpy
 torch
