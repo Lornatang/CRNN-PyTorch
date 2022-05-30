@@ -52,7 +52,7 @@ def build_model() -> nn.Module:
     model = model.to(device=config.device)
     print("Build CRNN model successfully.")
 
-    # Load the super-resolution model weights
+    # Load the CRNN model weights
     checkpoint = torch.load(config.model_path, map_location=lambda storage, loc: storage)
     model.load_state_dict(checkpoint["state_dict"])
     print(f"Load CRNN model weights `{os.path.abspath(config.model_path)}` successfully.")
@@ -113,7 +113,7 @@ def main() -> None:
                         total_correct += 1
 
                 if batch_index < total_files - 1:
-                    information = f"{image_path[0]} -> {''.join(prediction_chars[0])}"
+                    information = f"{os.path.basename(image_path[0])} -> {''.join(prediction_chars[0])}"
                     print(information)
                 else:
                     information = f"Acc: {total_correct / total_files * 100:.2f}%"
