@@ -13,30 +13,21 @@
 # ==============================================================================
 import os
 
-# Calculate the mean and variance of all dataset scripts
-os.system("python ./calculate_image_mean_and_std.py "
-          "--dataroot ../data/90kDICT32px/ "
-          "--annotation_file_name annotation.txt "
+# Convert SVT train dataset to text recognition processing dataset format
+os.system("python svt_converter.py "
+          "--inputs_dir ../data/original/svt1/img "
+          "--output_dir ../data/SVT/images "
+          "--inputs_annotation_file_path ../data/original/svt1/train.xml "
+          "--output_annotation_file_path ../data/SVT/annotation_train.txt "
+          "--resize "
           "--image_width 100 "
           "--image_height 32")
-
-# Calculate the mean and variance of a train scripts
-os.system("python ./calculate_image_mean_and_std.py "
-          "--dataroot ../data/90kDICT32px/ "
-          "--annotation_file_name annotation_train.txt "
-          "--image_width 100 "
-          "--image_height 32")
-
-# Calculate the mean and variance of a valid dataset scripts
-os.system("python ./calculate_image_mean_and_std.py "
-          "--dataroot ../data/90kDICT32px/ "
-          "--annotation_file_name annotation_valid.txt "
-          "--image_width 100 "
-          "--image_height 32")
-
-# Calculate the mean and variance of a test dataset scripts
-os.system("python ./calculate_image_mean_and_std.py "
-          "--dataroot ../data/90kDICT32px/ "
-          "--annotation_file_name annotation_test.txt "
+# Convert SVT test dataset to text recognition processing dataset format
+os.system("python svt_converter.py "
+          "--inputs_dir ../data/original/svt1/img "
+          "--output_dir ../data/SVT/images "
+          "--inputs_annotation_file_path ../data/original/svt1/test.xml "
+          "--output_annotation_file_path ../data/SVT/annotation_test.txt "
+          "--resize "
           "--image_width 100 "
           "--image_height 32")

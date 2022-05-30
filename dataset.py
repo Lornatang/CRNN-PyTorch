@@ -67,7 +67,7 @@ class TrainValidImageDataset(Dataset):
                 labels_map[i] = line.strip()
 
         # Read image path and corresponding text information
-        with open(os.path.join(self.dataroot, self.annotation_file_name), "r") as f:
+        with open(os.path.join(self.dataroot, self.annotation_file_name), "r", encoding="UTF-8") as f:
             for line in f.readlines():
                 path, index = line.strip().split(" ")
                 text = labels_map[int(index)]
@@ -127,7 +127,7 @@ class TestImageDataset(Dataset):
         image_texts = []
 
         # Read image path and corresponding text information
-        with open(os.path.join(self.dataroot, self.annotation_file_name), "r") as f:
+        with open(os.path.join(self.dataroot, self.annotation_file_name), "r", encoding="UTF-8") as f:
             for line in f.readlines():
                 path, text = line.strip().split(" ")
                 image_paths.append(os.path.join(self.dataroot, path))
