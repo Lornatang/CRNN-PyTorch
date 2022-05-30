@@ -20,7 +20,7 @@ of [An End-to-End Trainable Neural Network for Image-based Sequence Recognition 
     - [Result](#result)
     - [Contributing](#contributing)
     - [Credit](#credit)
-        - [Photo-Realistic Single Image Super-Resolution Using a Generative Adversarial Network](#photo-realistic-single-image-super-resolution-using-a-generative-adversarial-network)
+        - [An End-to-End Trainable Neural Network for Image-based Sequence Recognition and Its Application to Scene Text Recognition](#an-end-to-end-trainable-neural-network-for-image-based-sequence-recognition-and-its-application-to-scene-text-recognition)
 
 ## Download weights
 
