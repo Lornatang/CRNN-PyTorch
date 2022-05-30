@@ -34,14 +34,8 @@ model_num_classes = len(chars) + 1
 model_image_width = 100
 model_image_height = 32
 # Mean and std of the model input data source
-all_mean = 0.4639
-train_mean = 0.4639
-valid_mean = 0.4638
-test_mean = 0.4638
-all_std = 0.1422
-train_std = 0.1420
-valid_std = 0.1422
-test_std = 0.1423
+mean = 0.5
+std = 0.5
 # Current configuration parameter method
 mode = "train"
 # Experiment name, easy to save weights and log files
@@ -61,7 +55,7 @@ if mode == "train":
     resume = ""
 
     # Total num epochs
-    epochs = 128
+    epochs = 25
 
     # RMSprop optimizer parameter
     model_lr = 5e-4

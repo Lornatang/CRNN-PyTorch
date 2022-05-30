@@ -109,16 +109,16 @@ def load_dataset() -> [DataLoader, DataLoader]:
                                      labels_dict=config.labels_dict,
                                      image_width=config.model_image_width,
                                      image_height=config.model_image_height,
-                                     mean=config.all_mean,
-                                     std=config.all_std)
+                                     mean=config.mean,
+                                     std=config.std)
     valid_datasets = Synth90kDataset(dataroot=config.dataroot,
                                      annotation_file_name=config.annotation_valid_file_name,
                                      label_file_name=config.label_file_name,
                                      labels_dict=config.labels_dict,
                                      image_width=config.model_image_width,
                                      image_height=config.model_image_height,
-                                     mean=config.all_mean,
-                                     std=config.all_std)
+                                     mean=config.mean,
+                                     std=config.std)
 
     # Generator all dataloader
     train_dataloader = DataLoader(dataset=train_datasets,

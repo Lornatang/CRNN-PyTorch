@@ -72,9 +72,9 @@ class Synth90kDataset(Dataset):
         # Normalize and convert to Tensor format
         gray_image = gray_image.astype(np.float32)
         gray_image /= 255.
-        gray_image = (gray_image - self.mean) / self.std
         gray_image = gray_image.transpose([2, 0, 1])
         gray_tensor = torch.FloatTensor(gray_image)
+        gray_tensor = gray_tensor.sub_(self.mean).div_(self.std)  # [0, 1] convert [-1, 1]
 
         # component file encoding
         text = self.image_texts[index]
