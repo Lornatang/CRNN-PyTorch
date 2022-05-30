@@ -110,7 +110,7 @@ application scenarios. The experiments on standard benchmarks, including the III
 datasets, demonstrate the superiority of the proposed algorithm over the prior arts. Moreover, the proposed algorithm
 performs well in the task of image-based music score recognition, which evidently verifies the generality of it.
 
-[[Paper]](https://arxiv.org/pdf/1507.05717) [Code(Lua)](https://github.com/bgshih/crnn)
+[[Paper]](https://arxiv.org/pdf/1507.05717) [[Code(Lua)]](https://github.com/bgshih/crnn)
 
 ```bibtex
 @article{ShiBY17,
