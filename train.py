@@ -25,7 +25,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 import config
-from dataset import Synth90kDataset, synth90k_collate_fn
+from dataset import TrainValidImageDataset, collate_fn
 from decoder import ctc_decode
 from model import CRNN
 
@@ -103,29 +103,29 @@ def main():
 
 def load_dataset() -> [DataLoader, DataLoader]:
     # Load train, test and valid datasets
-    train_datasets = Synth90kDataset(dataroot=config.dataroot,
-                                     annotation_file_name=config.annotation_train_file_name,
-                                     label_file_name=config.label_file_name,
-                                     labels_dict=config.labels_dict,
-                                     image_width=config.model_image_width,
-                                     image_height=config.model_image_height,
-                                     mean=config.mean,
-                                     std=config.std)
-    valid_datasets = Synth90kDataset(dataroot=config.dataroot,
-                                     annotation_file_name=config.annotation_valid_file_name,
-                                     label_file_name=config.label_file_name,
-                                     labels_dict=config.labels_dict,
-                                     image_width=config.model_image_width,
-                                     image_height=config.model_image_height,
-                                     mean=config.mean,
-                                     std=config.std)
+    train_datasets = TrainValidImageDataset(dataroot=config.dataroot,
+                                      annotation_file_name=config.annotation_train_file_name,
+                                      label_file_name=config.label_file_name,
+                                      labels_dict=config.labels_dict,
+                                      image_width=config.model_image_width,
+                                      image_height=config.model_image_height,
+                                      mean=config.mean,
+                                      std=config.std)
+    valid_datasets = TrainValidImageDataset(dataroot=config.dataroot,
+                                      annotation_file_name=config.annotation_valid_file_name,
+                                      label_file_name=config.label_file_name,
+                                      labels_dict=config.labels_dict,
+                                      image_width=config.model_image_width,
+                                      image_height=config.model_image_height,
+                                      mean=config.mean,
+                                      std=config.std)
 
     # Generator all dataloader
     train_dataloader = DataLoader(dataset=train_datasets,
                                   batch_size=config.batch_size,
                                   shuffle=True,
                                   num_workers=config.num_workers,
-                                  collate_fn=synth90k_collate_fn,
+                                  collate_fn=collate_fn,
                                   pin_memory=True,
                                   drop_last=True,
                                   persistent_workers=True)
@@ -134,7 +134,7 @@ def load_dataset() -> [DataLoader, DataLoader]:
                                   batch_size=config.batch_size,
                                   shuffle=False,
                                   num_workers=config.num_workers,
-                                  collate_fn=synth90k_collate_fn,
+                                  collate_fn=collate_fn,
                                   pin_memory=True,
                                   drop_last=False,
                                   persistent_workers=True)
@@ -150,14 +150,14 @@ def build_model() -> nn.Module:
 
 
 def define_loss() -> nn.CTCLoss:
-    criterion = nn.CTCLoss(reduction="sum")
+    criterion = nn.CTCLoss()
     criterion = criterion.to(device=config.device)
 
     return criterion
 
 
-def define_optimizer(model) -> optim.RMSprop:
-    optimizer = optim.RMSprop(model.parameters(), config.model_lr)
+def define_optimizer(model) -> optim.Adadelta:
+    optimizer = optim.Adadelta(model.parameters(), config.model_lr)
 
     return optimizer
 
@@ -219,7 +219,7 @@ def train(model: nn.Module,
             labels_length = torch.flatten(labels_length)
 
             # Computational loss
-            loss = criterion(output_probs, labels, images_lengths, labels_length) / curren_batch_size
+            loss = criterion(output_probs, labels, images_lengths, labels_length)
 
         # Backpropagation
         scaler.scale(loss).backward()

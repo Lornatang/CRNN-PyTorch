@@ -39,41 +39,40 @@ std = 0.5
 # Current configuration parameter method
 mode = "train"
 # Experiment name, easy to save weights and log files
-exp_name = "CRNN"
+exp_name = "CRNN_Synth90K"
 
 if mode == "train":
     # Dataset
-    dataroot = "data/Synth90k"
+    dataroot = "./data/Synth90k"
     annotation_train_file_name = "annotation_train.txt"
     annotation_valid_file_name = "annotation_valid.txt"
     label_file_name = "lexicon.txt"
 
-    batch_size = 128
+    batch_size = 64
     num_workers = 4
 
     # Incremental training and migration training
     resume = ""
 
     # Total num epochs
-    epochs = 25
+    epochs = 5
 
-    # RMSprop optimizer parameter
-    model_lr = 5e-4
+    # Adadelta optimizer parameter
+    model_lr = 1.0
 
     # How many iterations to print the training result
-    print_frequency = 200
+    print_frequency = 1000
 
 if mode == "valid":
     # Whether to enable half-precision inference
     fp16 = True
 
     # The path and name of the folder where the verification results are saved
-    validate_result_dir = "results/test"
-    validate_result_file_name = "Synth90k_test_result.txt"
+    result_dir = "./results/test"
+    result_file_name = "IIIT5K_result.txt"
 
     # The directory path where the dataset to be verified is located
-    dataroot = "data/Synth90k"
-    annotation_file_name = "annotation_test.txt"
-    label_file_name = "lexicon.txt"
+    dataroot = "./data/IIIT5K"
+    annotation_file_name = "annotation.txt"
 
-    model_path = "results/pretrained_models/CRNN-Synth90k-xxxxxxxx.pth.tar"
+    model_path = "results/pretrained_models/CRNN-Synth90k-e9341ede.pth.tar"

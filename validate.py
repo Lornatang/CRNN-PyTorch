@@ -19,27 +19,26 @@ from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
 import config
-from dataset import Synth90kDataset, synth90k_collate_fn
+from dataset import TestImageDataset, collate_fn
 from decoder import ctc_decode
 from model import CRNN
 
 
 def load_dataloader() -> DataLoader:
     # Load datasets
-    datasets = Synth90kDataset(dataroot=config.dataroot,
-                               annotation_file_name=config.annotation_file_name,
-                               label_file_name=config.label_file_name,
-                               labels_dict=config.labels_dict,
-                               image_width=config.model_image_width,
-                               image_height=config.model_image_height,
-                               mean=config.all_mean,
-                               std=config.all_std)
+    datasets = TestImageDataset(dataroot=config.dataroot,
+                                annotation_file_name=config.annotation_file_name,
+                                labels_dict=config.labels_dict,
+                                image_width=config.model_image_width,
+                                image_height=config.model_image_height,
+                                mean=config.mean,
+                                std=config.std)
 
     dataloader = DataLoader(dataset=datasets,
                             batch_size=1,
                             shuffle=False,
                             num_workers=1,
-                            collate_fn=synth90k_collate_fn,
+                            collate_fn=collate_fn,
                             pin_memory=True,
                             drop_last=False,
                             persistent_workers=True)
@@ -79,13 +78,13 @@ def main() -> None:
     dataloader = load_dataloader()
 
     # Create a experiment folder results
-    if not os.path.exists(config.validate_result_dir):
-        os.makedirs(config.validate_result_dir)
+    if not os.path.exists(config.result_dir):
+        os.makedirs(config.result_dir)
 
     # Get the number of test image files
     total_files = len(dataloader)
 
-    with open(os.path.join(config.validate_result_dir, config.validate_result_file_name), "w") as f:
+    with open(os.path.join(config.result_dir, config.result_file_name), "w") as f:
         with torch.no_grad():
             for batch_index, (image_path, images, labels, labels_length) in enumerate(dataloader):
                 # Transfer in-memory data to CUDA devices to speed up training

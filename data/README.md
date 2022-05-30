@@ -51,27 +51,32 @@ Finally, you will get a directory structure like this under this directory.
     - lexicon.txt
 ```
 
-## Special attention
-
-Mean and std in the dataset.
-*The following numerical calculations are derived from the `<CRNN-PyTorch-main>/scripts/run.py` file*
-
-### Synth90k
+## Step4: Check that the final dataset directory schema is completely correct
 
 ```text
-# all dataset
-mean = 0.4639
-std = 0.1422
+# Train dataset
+- Synth90k
+    - 1
+    - 2
+    - 3
+    ...
+    - annotation.txt
+    - annotation_train.txt
+    - annotation_valid.txt
+    - annotation_test.txt
+    - images_list.txt
+    - lexicon.txt
 
-# train dataset
-mean = 0.4639
-std = 0.1420
-
-# valid dataset
-mean = 0.4638
-std  = 0.1422
-
-# test dataset
-mean = 0.4638
-std  = 0.1423
+# Test dataset
+- IIIT5K
+    - train
+    - test
+        - baby.png
+        - bird.png
+        - ...
+    - annotation.txt
+    - annotation_train.txt
+    - annotation_test.txt
+    - images_list.txt
+    - lexicon.txt
 ```

@@ -91,8 +91,7 @@ class CRNN(nn.Module):
     def _initialize_weights(self) -> None:
         for module in self.modules():
             if isinstance(module, nn.Conv2d):
-                nn.init.kaiming_normal_(module.weight)
-                if module.bias is not None:
-                    nn.init.constant_(module.bias, 0)
+                nn.init.kaiming_normal_(module.weight, mode="fan_in", nonlinearity="relu")
             elif isinstance(module, nn.BatchNorm2d):
                 nn.init.constant_(module.weight, 1)
+                nn.init.constant_(module.bias, 0)
