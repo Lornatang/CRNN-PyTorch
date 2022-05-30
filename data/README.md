@@ -71,9 +71,6 @@ Finally, you will get a directory structure like this under this directory.
 - IIIT5K
     - train
     - test
-        - baby.png
-        - bird.png
-        - ...
     - annotation.txt
     - annotation_train.txt
     - annotation_test.txt
