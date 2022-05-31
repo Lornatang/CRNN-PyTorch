@@ -78,6 +78,10 @@ class CRNN(nn.Module):
         self._initialize_weights()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self._forward_impl(x)
+
+    # Support torch.script function
+    def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
         # Feature sequence
         features = self.convolutional_layers(x)  # [b, c, h, w]
         features = features.squeeze(2)  # [b, c, w]
