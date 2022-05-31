@@ -63,7 +63,7 @@ if mode == "train":
     # How many iterations to print the training result
     print_frequency = 1000
 
-if mode == "valid":
+if mode == "test":
     # Whether to enable half-precision inference
     fp16 = True
 

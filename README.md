@@ -42,7 +42,7 @@ Both training and testing only need to modify the `config.py` file.
 
 ### Test
 
-- line 40: `mode` change to `valid`.
+- line 40: `mode` change to `test`.
 - line 78: `model_path` change to `results/pretrained_models/CRNN-Synth90k-e9341ede.pth.tar`.
 
 ### Train CRNN model
