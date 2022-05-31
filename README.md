@@ -62,10 +62,10 @@ Source of original paper results: [https://arxiv.org/pdf/1507.05717.pdf](https:/
 
 In the following table, `-` indicates show no test.
 
-|    Model    | IIIT5K(Full) | SVT(Full) |
-|:-----------:|:------------:|:---------:|
-| CRNN(paper) |     78.2     |   80.8    |
-| CRNN(repo)  |   **81.5**   | **80.1**  |
+|    Model    | IIIT5K(Full) | SVT(Full) | IC03(Full) | IC13(Full) |
+|:-----------:|:------------:|:---------:|:----------:|:----------:|
+| CRNN(paper) |     78.2     |   80.8    |    89.4    |    86.7    |
+| CRNN(repo)  |   **81.5**   | **80.1**  |   **-**    |   **-**    |
 
 ```bash
 # Download `CRNN-Synth90k-e9341ede.pth.tar` weights to `./results/pretrained_models`

@@ -19,7 +19,7 @@ from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
 import config
-from dataset import TestImageDataset, collate_fn
+from dataset import TestImageDataset, test_collate_fn
 from decoder import ctc_decode
 from model import CRNN
 
@@ -28,7 +28,6 @@ def load_dataloader() -> DataLoader:
     # Load datasets
     datasets = TestImageDataset(dataroot=config.dataroot,
                                 annotation_file_name=config.annotation_file_name,
-                                labels_dict=config.labels_dict,
                                 image_width=config.model_image_width,
                                 image_height=config.model_image_height,
                                 mean=config.mean,
@@ -38,7 +37,7 @@ def load_dataloader() -> DataLoader:
                             batch_size=1,
                             shuffle=False,
                             num_workers=1,
-                            collate_fn=collate_fn,
+                            collate_fn=test_collate_fn,
                             pin_memory=True,
                             drop_last=False,
                             persistent_workers=True)
@@ -86,11 +85,9 @@ def main() -> None:
 
     with open(os.path.join(config.result_dir, config.result_file_name), "w") as f:
         with torch.no_grad():
-            for batch_index, (image_path, images, labels, labels_length) in enumerate(dataloader):
+            for batch_index, (image_path, images, labels) in enumerate(dataloader):
                 # Transfer in-memory data to CUDA devices to speed up training
                 images = images.to(device=config.device, non_blocking=True)
-                labels = labels.to(device=config.device, non_blocking=True)
-                labels_length = labels_length.to(device=config.device, non_blocking=True)
 
                 if config.fp16:
                     # Convert to FP16
@@ -101,19 +98,13 @@ def main() -> None:
 
                 # record accuracy
                 output_probs = F.log_softmax(output, 2)
-                prediction_labels, prediction_chars = ctc_decode(output_probs, config.chars_dict)
-                labels = labels.cpu().numpy().tolist()
-                labels_length = labels_length.cpu().numpy().tolist()
+                _, prediction_chars = ctc_decode(output_probs, config.chars_dict)
 
-                labels_length_counter = 0
-                for prediction_label, label_length in zip(prediction_labels, labels_length):
-                    label = labels[labels_length_counter:labels_length_counter + label_length]
-                    labels_length_counter += label_length
-                    if prediction_label == label:
-                        total_correct += 1
+                if "".join(prediction_chars[0]) == labels[0].lower():
+                    total_correct += 1
 
                 if batch_index < total_files - 1:
-                    information = f"{os.path.basename(image_path[0])} -> {''.join(prediction_chars[0])}"
+                    information = f"`{os.path.basename(image_path[0])}` -> `{''.join(prediction_chars[0])}`"
                     print(information)
                 else:
                     information = f"Acc: {total_correct / total_files * 100:.2f}%"

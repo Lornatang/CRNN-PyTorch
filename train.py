@@ -25,7 +25,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 import config
-from dataset import TrainValidImageDataset, collate_fn
+from dataset import TrainValidImageDataset, train_valid_collate_fn
 from decoder import ctc_decode
 from model import CRNN
 
@@ -125,7 +125,7 @@ def load_dataset() -> [DataLoader, DataLoader]:
                                   batch_size=config.batch_size,
                                   shuffle=True,
                                   num_workers=config.num_workers,
-                                  collate_fn=collate_fn,
+                                  collate_fn=train_valid_collate_fn,
                                   pin_memory=True,
                                   drop_last=True,
                                   persistent_workers=True)
@@ -134,7 +134,7 @@ def load_dataset() -> [DataLoader, DataLoader]:
                                   batch_size=config.batch_size,
                                   shuffle=False,
                                   num_workers=config.num_workers,
-                                  collate_fn=collate_fn,
+                                  collate_fn=train_valid_collate_fn,
                                   pin_memory=True,
                                   drop_last=False,
                                   persistent_workers=True)
@@ -195,31 +195,31 @@ def train(model: nn.Module,
     # Get the initialization training time
     end = time.time()
 
-    for batch_index, (_, images, labels, labels_length) in enumerate(train_dataloader):
+    for batch_index, (images_tensor, labels_tensor, labels_length_tensor) in enumerate(train_dataloader):
         # Calculate the time it takes to load a batch of data
         data_time.update(time.time() - end)
 
         # Get the number of data in the current batch
-        curren_batch_size = images.size(0)
+        curren_batch_size = images_tensor.size(0)
 
         # Transfer in-memory data to CUDA devices to speed up training
-        images = images.to(device=config.device, non_blocking=True)
-        labels = labels.to(device=config.device, non_blocking=True)
-        labels_length = labels_length.to(device=config.device, non_blocking=True)
+        images_tensor = images_tensor.to(device=config.device, non_blocking=True)
+        labels_tensor = labels_tensor.to(device=config.device, non_blocking=True)
+        labels_length_tensor = labels_length_tensor.to(device=config.device, non_blocking=True)
 
         # Initialize generator gradients
         model.zero_grad(set_to_none=True)
 
         # Mixed precision training
         with amp.autocast():
-            output = model(images)
+            output = model(images_tensor)
 
-            output_probs = F.log_softmax(output, 2)
-            images_lengths = torch.LongTensor([output.size(0)] * curren_batch_size)
-            labels_length = torch.flatten(labels_length)
+            output_log_probs = F.log_softmax(output, 2)
+            images_lengths_tensor = torch.LongTensor([output.size(0)] * curren_batch_size)
+            labels_length_tensor = torch.flatten(labels_length_tensor)
 
             # Computational loss
-            loss = criterion(output_probs, labels, images_lengths, labels_length)
+            loss = criterion(output_log_probs, labels_tensor, images_lengths_tensor, labels_length_tensor)
 
         # Backpropagation
         scaler.scale(loss).backward()
@@ -264,28 +264,28 @@ def validate(model: nn.Module,
     total_files = 0
 
     with torch.no_grad():
-        for batch_index, (_, images, labels, labels_length) in enumerate(dataloader):
+        for batch_index, (images_tensor, labels_tensor, labels_length_tensor) in enumerate(dataloader):
             # Get how many data the current batch has and increase the total number of tests
-            total_files += images.size(0)
+            total_files += images_tensor.size(0)
 
             # Transfer in-memory data to CUDA devices to speed up training
-            images = images.to(device=config.device, non_blocking=True)
-            labels = labels.to(device=config.device, non_blocking=True)
-            labels_length = labels_length.to(device=config.device, non_blocking=True)
+            images_tensor = images_tensor.to(device=config.device, non_blocking=True)
+            labels_tensor = labels_tensor.to(device=config.device, non_blocking=True)
+            labels_length_tensor = labels_length_tensor.to(device=config.device, non_blocking=True)
 
             # Mixed precision testing
             with amp.autocast():
-                output = model(images)
+                output = model(images_tensor)
 
             # record accuracy
-            output_probs = F.log_softmax(output, 2)
-            prediction_labels, _ = ctc_decode(output_probs, config.chars_dict)
-            labels = labels.cpu().numpy().tolist()
-            labels_length = labels_length.cpu().numpy().tolist()
+            output_log_probs = F.log_softmax(output, 2)
+            prediction_labels, _ = ctc_decode(output_log_probs, config.chars_dict)
+            labels_tensor = labels_tensor.cpu().numpy().tolist()
+            labels_length_tensor = labels_length_tensor.cpu().numpy().tolist()
 
             labels_length_counter = 0
-            for prediction_label, label_length in zip(prediction_labels, labels_length):
-                label = labels[labels_length_counter:labels_length_counter + label_length]
+            for prediction_label, label_length in zip(prediction_labels, labels_length_tensor):
+                label = labels_tensor[labels_length_counter:labels_length_counter + label_length]
                 labels_length_counter += label_length
                 if prediction_label == label:
                     total_correct += 1
