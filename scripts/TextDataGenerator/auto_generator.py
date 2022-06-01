@@ -19,12 +19,11 @@ from glob import glob
 from natsort import natsorted
 
 FONTS_DIR_PATH = "./fonts"
-DICT_PATH = "./dicts/dict.txt"
+DICT_PATH = "./lexicons/lexicon.txt"
 OUTPUT_DIR_PATH = "./output"
-DATASET_NAME = "./test"
 ANNOTATION_NAME = "annotation.txt"
-EPOCHS = 64
-BATCH_SIZE = 64
+EPOCHS = 16
+BATCH_SIZE = 16
 MAX_LENGTH = 10
 LANGUAGE = "en"
 IMAGE_HEIGHT_RANGE = (30, 34)
@@ -145,14 +144,11 @@ class TextDataGenerator:
                 print(f"Process: `{all_files[index]}` "
                       f"[{index + 1}/{total_files}]({(index + 1) / total_files * 100:.2f}%)")
                 all_files[index] = "./" + all_files[index].replace("\\", "/")[len(OUTPUT_DIR_PATH) + 1:]
-                text = f"{all_files[index]} {annotation_list.index(os.path.basename(all_files[index]).split('_')[1][:-len(EXTENSION) - 1])}"
+                text = f"{all_files[index]} {os.path.basename(all_files[index]).split('_')[1][:-len(EXTENSION) - 1]}"
                 # No line breaks are required at the end of the data
                 if index != total_files - 1:
                     text += "\n"
                 af.write(text)
-
-        shutil.copyfile(DICT_PATH, f"{os.path.join(OUTPUT_DIR_PATH, os.path.basename(DICT_PATH))}")
-
 
 if __name__ == "__main__":
     text_data_generator = TextDataGenerator(fonts_dir_path=FONTS_DIR_PATH,
