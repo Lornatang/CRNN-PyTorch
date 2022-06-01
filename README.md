@@ -9,18 +9,18 @@ of [An End-to-End Trainable Neural Network for Image-based Sequence Recognition 
 ## Table of contents
 
 - [CRNN-PyTorch](#crnn-pytorch)
-    - [Overview](#overview)
-    - [Table of contents](#table-of-contents)
-    - [Download weights](#download-weights)
-    - [Download datasets](#download-datasets)
-    - [How Test and Train](#how-test-and-train)
-        - [Test](#test)
-        - [Train CRNN model](#train-crnn-model)
-        - [Resume train CRNN model](#resume-train-crnn-model)
-    - [Result](#result)
-    - [Contributing](#contributing)
-    - [Credit](#credit)
-        - [An End-to-End Trainable Neural Network for Image-based Sequence Recognition and Its Application to Scene Text Recognition](#an-end-to-end-trainable-neural-network-for-image-based-sequence-recognition-and-its-application-to-scene-text-recognition)
+  - [Overview](#overview)
+  - [Table of contents](#table-of-contents)
+  - [Download weights](#download-weights)
+  - [Download datasets](#download-datasets)
+  - [How Test and Train](#how-test-and-train)
+    - [Test](#test)
+    - [Train CRNN model](#train-crnn-model)
+    - [Resume train CRNN model](#resume-train-crnn-model)
+  - [Result](#result)
+  - [Contributing](#contributing)
+  - [Credit](#credit)
+    - [An End-to-End Trainable Neural Network for Image-based Sequence Recognition and Its Application to Scene Text Recognition](#an-end-to-end-trainable-neural-network-for-image-based-sequence-recognition-and-its-application-to-scene-text-recognition)
 
 ## Download weights
 
@@ -29,7 +29,7 @@ of [An End-to-End Trainable Neural Network for Image-based Sequence Recognition 
 
 ## Download datasets
 
-Contains ICDAR2013~2019, Synth90k, Synth800k, SynthText, Verisimilar Synthesis, UnrealText and more, etc.
+Contains ICDAR2013~2019, MJSynth, SynthText, SynthAdd, Verisimilar Synthesis, UnrealText and more, etc.
 
 - [Google Driver](https://drive.google.com/drive/folders/1CwkA0gKd4bnj66W0l6CB14sx-aAe3WOE?usp=sharing)
 - [Baidu Driver](https://pan.baidu.com/s/1v31aBT5phe5Ci6N0Wsn3xQ?pwd=llot)
@@ -43,18 +43,18 @@ Both training and testing only need to modify the `config.py` file.
 ### Test
 
 - line 40: `mode` change to `test`.
-- line 78: `model_path` change to `results/pretrained_models/CRNN-Synth90k-e9341ede.pth.tar`.
+- line 79: `model_path` change to `results/pretrained_models/CRNN-MJSynth-e9341ede.pth.tar`.
 
 ### Train CRNN model
 
 - line 40: `mode` change to `train`.
-- line 42: `exp_name` change to `CRNN_Synth90K`.
+- line 42: `exp_name` change to `CRNN_MJSynth`.
 
 ### Resume train CRNN model
 
 - line 40: `mode` change to `train`.
-- line 42: `exp_name` change to `CRNN_Synth90K`.
-- line 55: `resume` change to `samples/CRNN_Synth90K/epoch_xxx.pth.tar`.
+- line 42: `exp_name` change to `CRNN_MJSynth`.
+- line 56: `resume` change to `samples/CRNN_MJSynth/epoch_xxx.pth.tar`.
 
 ## Result
 
@@ -62,7 +62,7 @@ Source of original paper results: [https://arxiv.org/pdf/1507.05717.pdf](https:/
 
 In the following table, `-` indicates show no test.
 
-|    Model    | IIIT5K(Full) | SVT(Full) | IC03(Full) | IC13(Full) |
+|    Model    | IIIT5K(None) | SVT(None) | IC03(None) | IC13(None) |
 |:-----------:|:------------:|:---------:|:----------:|:----------:|
 | CRNN(paper) |     78.2     |   80.8    |    89.4    |    86.7    |
 | CRNN(repo)  |   **81.5**   | **80.1**  |   **-**    |   **-**    |
@@ -70,7 +70,7 @@ In the following table, `-` indicates show no test.
 ```bash
 # Download `CRNN-Synth90k-e9341ede.pth.tar` weights to `./results/pretrained_models`
 # More detail see `README.md<Download weights>`
-python predict.py --image_path ./figures/Available.png --weights_path ./results/pretrained_models/CRNN-Synth90k-e9341ede.pth.tar
+python predict.py --image_path ./figures/Available.png --weights_path ./results/pretrained_models/CRNN-MJSynth-e9341ede.pth.tar
 ```
 
 Input: <span align="center"><img src="figures/Available.png"/></span>
@@ -79,7 +79,7 @@ Output:
 
 ```text
 Build CRNN model successfully.
-Load CRNN model weights `./results/pretrained_models/CRNN-Synth90k-e9341ede.pth.tar` successfully.
+Load CRNN model weights `./results/pretrained_models/CRNN-MJSynth-e9341ede.pth.tar` successfully.
 ``./figures/Available.png` -> `available`
 ```
 

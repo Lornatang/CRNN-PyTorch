@@ -42,11 +42,11 @@ mode = "train"
 exp_name = "CRNN_MJSynth"
 
 if mode == "train":
-    # Dataset
+    # Train dataset
     train_dataroot = "./data/MJSynth"
-    test_dataroot = "./data/IIIT5K"
-
     annotation_train_file_name = "annotation_train.txt"
+    # Test dataset
+    test_dataroot = "./data/IIIT5K"
     annotation_test_file_name = "annotation_test.txt"
 
     batch_size = 64
