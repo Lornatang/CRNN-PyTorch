@@ -58,8 +58,8 @@ def main(args):
         output = model(gray_tensor)
 
         # record accuracy
-        output_probs = F.log_softmax(output, 2)
-        _, prediction_chars = ctc_decode(output_probs, config.chars_dict)
+        output_log_probs = F.log_softmax(output, 2)
+        _, prediction_chars = ctc_decode(output_log_probs, config.chars_dict)
 
     print(f"`{args.image_path}` -> `{''.join(prediction_chars[0])}`\n")
 

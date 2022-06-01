@@ -43,10 +43,11 @@ exp_name = "CRNN_Synth90K"
 
 if mode == "train":
     # Dataset
-    dataroot = "./data/Synth90k"
+    train_dataroot = "./data/Synth90k"
+    test_dataroot = "./data/IIIT5K"
+
     annotation_train_file_name = "annotation_train.txt"
-    annotation_valid_file_name = "annotation_valid.txt"
-    label_file_name = "lexicon.txt"
+    annotation_test_file_name = "annotation_test.txt"
 
     batch_size = 64
     num_workers = 4
@@ -73,6 +74,6 @@ if mode == "test":
 
     # The directory path where the dataset to be verified is located
     dataroot = "./data/IIIT5K"
-    annotation_file_name = "annotation.txt"
+    annotation_file_name = "annotation_test.txt"
 
     model_path = "results/pretrained_models/CRNN-Synth90k-e9341ede.pth.tar"

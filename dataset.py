@@ -21,73 +21,66 @@ from torch.utils.data import Dataset
 import imgproc
 
 __all__ = [
-    "train_valid_collate_fn", "test_collate_fn",
-    "TrainValidImageDataset", "TestImageDataset"
+    "train_collate_fn", "valid_test_collate_fn",
+    "ImageDataset"
 ]
 
 
-def train_valid_collate_fn(batch: [torch.Tensor, torch.Tensor, torch.Tensor]) -> [torch.Tensor,
-                                                                                  torch.Tensor,
-                                                                                  torch.Tensor]:
-    image_path, image_tensor, label_tensor, label_length_tensor = zip(*batch)
-    image_tensor = torch.stack(image_tensor, 0)
-    label_tensor = torch.cat(label_tensor, 0)
-    label_length_tensor = torch.cat(label_length_tensor, 0)
+def train_collate_fn(batch: [torch.Tensor, torch.Tensor, torch.Tensor]) -> [torch.Tensor,
+                                                                            torch.Tensor,
+                                                                            torch.Tensor]:
+    images, target, target_length = zip(*batch)
+    images = torch.stack(images, 0)
+    target = torch.cat(target, 0)
+    target_length = torch.cat(target_length, 0)
 
-    return image_tensor, label_tensor, label_length_tensor
-
-
-def test_collate_fn(batch: [str, torch.Tensor, str]) -> [str, torch.Tensor, str]:
-    image_path, image_tensor, image_label = zip(*batch)
-    image_tensor = torch.stack(image_tensor, 0)
-
-    return image_path, image_tensor, image_label
+    return images, target, target_length
 
 
-class TrainValidImageDataset(Dataset):
+def valid_test_collate_fn(batch: [str, torch.Tensor, str]) -> [str, torch.Tensor, str]:
+    image_path, images, target = zip(*batch)
+    images = torch.stack(images, 0)
+
+    return image_path, images, target
+
+
+class ImageDataset(Dataset):
     def __init__(self,
-                 dataroot: str,
-                 annotation_file_name: str,
-                 label_file_name: str,
-                 labels_dict: dict,
-                 image_width: int,
-                 image_height: int,
-                 mean: list,
-                 std: list):
+                 dataroot: str = None,
+                 annotation_file_name: str = None,
+                 labels_dict: dict = None,
+                 image_width: int = None,
+                 image_height: int = None,
+                 mean: list = None,
+                 std: list = None,
+                 mode: str = None):
         self.dataroot = dataroot
         self.annotation_file_name = annotation_file_name
-        self.label_file_name = label_file_name
         self.labels_dict = labels_dict
         self.image_width = image_width
         self.image_height = image_height
         self.mean = mean
         self.std = std
+        self.mode = mode
 
-        self.image_paths, self.image_labels = self.load_image_label_from_file()
+        self.images_path, self.images_target = self.load_image_label_from_file()
 
     def load_image_label_from_file(self):
         # Initialize the definition of image path, image text information, etc.
-        lexicon_maps = {}
-        image_paths = []
-        image_labels = []
-
-        # Read text labels and compose a label map
-        with open(os.path.join(self.dataroot, self.label_file_name), "r") as f:
-            for i, line in enumerate(f.readlines()):
-                lexicon_maps[i] = line.strip()
+        images_path = []
+        images_target = []
 
         # Read image path and corresponding text information
         with open(os.path.join(self.dataroot, self.annotation_file_name), "r", encoding="UTF-8") as f:
             for line in f.readlines():
-                image_path, lexicon_index = line.strip().split(" ")
-                image_label = lexicon_maps[int(lexicon_index)]
-                image_paths.append(os.path.join(self.dataroot, image_path))
-                image_labels.append(image_label)
+                image_path, image_target = line.strip().split(" ")
+                images_path.append(os.path.join(self.dataroot, image_path))
+                images_target.append(image_target)
 
-        return image_paths, image_labels
+        return images_path, images_target
 
     def __getitem__(self, index: int) -> [str, torch.Tensor, torch.Tensor, torch.Tensor]:
-        image_path = self.image_paths[index]
+        image_path = self.images_path[index]
 
         # Read the image and convert it to grayscale
         image = cv2.imread(image_path)
@@ -97,67 +90,23 @@ class TrainValidImageDataset(Dataset):
         image = np.reshape(image, (self.image_height, self.image_width, 1))
 
         # Normalize and convert to Tensor format
-        image_tensor = imgproc.image2tensor(image, mean=self.mean, std=self.std)
+        image = imgproc.image2tensor(image, mean=self.mean, std=self.std)
 
-        # component file encoding
-        label = self.image_labels[index]
-        label = [self.labels_dict[character] for character in label]
+        if self.mode == "train" and self.labels_dict is not None:
+            # Read images target
+            target = self.images_target[index]
+            target = [self.labels_dict[character] for character in target]
+            target = torch.LongTensor(target)
+            target_length = torch.LongTensor([len(target)])
 
-        label_tensor = torch.LongTensor(label)
-        label_length_tensor = torch.LongTensor([len(label)])
+            return image, target, target_length
+        elif self.mode == "valid" or self.mode == "test":
+            # Read images target
+            target = self.images_target[index]
 
-        return image_tensor, label_tensor, label_length_tensor
-
-    def __len__(self):
-        return len(self.image_paths)
-
-
-class TestImageDataset(Dataset):
-    def __init__(self,
-                 dataroot: str,
-                 annotation_file_name: str,
-                 image_width: int,
-                 image_height: int,
-                 mean: list,
-                 std: list):
-        self.dataroot = dataroot
-        self.annotation_file_name = annotation_file_name
-        self.image_width = image_width
-        self.image_height = image_height
-        self.mean = mean
-        self.std = std
-
-        self.image_paths, self.image_labels = self.load_image_label_from_file()
-
-    def load_image_label_from_file(self):
-        # Initialize the definition of image path, image text information, etc.
-        image_paths = []
-        image_labels = []
-
-        # Read image path and corresponding text information
-        with open(os.path.join(self.dataroot, self.annotation_file_name), "r", encoding="UTF-8") as f:
-            for line in f.readlines():
-                image_path, image_label = line.strip().split(" ")
-                image_paths.append(os.path.join(self.dataroot, image_path))
-                image_labels.append(image_label)
-
-        return image_paths, image_labels
-
-    def __getitem__(self, index: int) -> [str, torch.Tensor, str]:
-        image_path = self.image_paths[index]
-        image_label = self.image_labels[index]
-
-        # Read the image and convert it to grayscale
-        image = cv2.imread(image_path)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        # Scale to the size of the image that the model can accept
-        image = cv2.resize(image, (self.image_width, self.image_height), interpolation=cv2.INTER_CUBIC)
-        image = np.reshape(image, (self.image_height, self.image_width, 1))
-
-        # Normalize and convert to Tensor format
-        image_tensor = imgproc.image2tensor(image, mean=self.mean, std=self.std)
-
-        return image_path, image_tensor, image_label
+            return image_path, image, target
+        else:
+            raise ValueError("Unsupported data processing model, please use `train`, `valid` or `test`.")
 
     def __len__(self):
-        return len(self.image_paths)
+        return len(self.images_path)

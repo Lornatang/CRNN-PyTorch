@@ -19,25 +19,26 @@ from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
 import config
-from dataset import TestImageDataset, test_collate_fn
+from dataset import ImageDataset, valid_test_collate_fn
 from decoder import ctc_decode
 from model import CRNN
 
 
 def load_dataloader() -> DataLoader:
     # Load datasets
-    datasets = TestImageDataset(dataroot=config.dataroot,
-                                annotation_file_name=config.annotation_file_name,
-                                image_width=config.model_image_width,
-                                image_height=config.model_image_height,
-                                mean=config.mean,
-                                std=config.std)
+    datasets = ImageDataset(dataroot=config.dataroot,
+                            annotation_file_name=config.annotation_file_name,
+                            image_width=config.model_image_width,
+                            image_height=config.model_image_height,
+                            mean=config.mean,
+                            std=config.std,
+                            mode="test")
 
     dataloader = DataLoader(dataset=datasets,
                             batch_size=1,
                             shuffle=False,
                             num_workers=1,
-                            collate_fn=test_collate_fn,
+                            collate_fn=valid_test_collate_fn,
                             pin_memory=True,
                             drop_last=False,
                             persistent_workers=True)
@@ -97,8 +98,8 @@ def main() -> None:
                 output = model(images)
 
                 # record accuracy
-                output_probs = F.log_softmax(output, 2)
-                _, prediction_chars = ctc_decode(output_probs, config.chars_dict)
+                output_log_probs = F.log_softmax(output, 2)
+                _, prediction_chars = ctc_decode(output_log_probs, config.chars_dict)
 
                 if "".join(prediction_chars[0]) == labels[0].lower():
                     total_correct += 1

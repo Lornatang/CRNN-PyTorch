@@ -25,7 +25,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 import config
-from dataset import TrainValidImageDataset, train_valid_collate_fn
+from dataset import ImageDataset, train_collate_fn, valid_test_collate_fn
 from decoder import ctc_decode
 from model import CRNN
 
@@ -37,7 +37,7 @@ def main():
     # Initialize training network evaluation indicators
     best_acc = 0.0
 
-    train_dataloader, valid_dataloader = load_dataset()
+    train_dataloader, test_dataloader = load_dataset()
     print("Load all datasets successfully.")
 
     model = build_model()
@@ -82,7 +82,7 @@ def main():
 
     for epoch in range(start_epoch, config.epochs):
         train(model, train_dataloader, criterion, optimizer, epoch, scaler, writer)
-        acc = validate(model, valid_dataloader, epoch, writer, "Valid")
+        acc = validate(model, test_dataloader, epoch, writer, "Valid")
         print("\n")
 
         # Automatically save the model with the highest index
@@ -102,44 +102,43 @@ def main():
 
 
 def load_dataset() -> [DataLoader, DataLoader]:
-    # Load train, test and valid datasets
-    train_datasets = TrainValidImageDataset(dataroot=config.dataroot,
-                                      annotation_file_name=config.annotation_train_file_name,
-                                      label_file_name=config.label_file_name,
-                                      labels_dict=config.labels_dict,
-                                      image_width=config.model_image_width,
-                                      image_height=config.model_image_height,
-                                      mean=config.mean,
-                                      std=config.std)
-    valid_datasets = TrainValidImageDataset(dataroot=config.dataroot,
-                                      annotation_file_name=config.annotation_valid_file_name,
-                                      label_file_name=config.label_file_name,
-                                      labels_dict=config.labels_dict,
-                                      image_width=config.model_image_width,
-                                      image_height=config.model_image_height,
-                                      mean=config.mean,
-                                      std=config.std)
+    # Load train and test datasets
+    train_datasets = ImageDataset(dataroot=config.train_dataroot,
+                                  annotation_file_name=config.annotation_train_file_name,
+                                  labels_dict=config.labels_dict,
+                                  image_width=config.model_image_width,
+                                  image_height=config.model_image_height,
+                                  mean=config.mean,
+                                  std=config.std,
+                                  mode="train")
+    test_datasets = ImageDataset(dataroot=config.test_dataroot,
+                                 annotation_file_name=config.annotation_test_file_name,
+                                 image_width=config.model_image_width,
+                                 image_height=config.model_image_height,
+                                 mean=config.mean,
+                                 std=config.std,
+                                 mode="test")
 
     # Generator all dataloader
     train_dataloader = DataLoader(dataset=train_datasets,
                                   batch_size=config.batch_size,
                                   shuffle=True,
                                   num_workers=config.num_workers,
-                                  collate_fn=train_valid_collate_fn,
+                                  collate_fn=train_collate_fn,
                                   pin_memory=True,
                                   drop_last=True,
                                   persistent_workers=True)
 
-    valid_dataloader = DataLoader(dataset=valid_datasets,
-                                  batch_size=config.batch_size,
-                                  shuffle=False,
-                                  num_workers=config.num_workers,
-                                  collate_fn=train_valid_collate_fn,
-                                  pin_memory=True,
-                                  drop_last=False,
-                                  persistent_workers=True)
+    test_dataloader = DataLoader(dataset=test_datasets,
+                                 batch_size=1,
+                                 shuffle=False,
+                                 num_workers=1,
+                                 collate_fn=valid_test_collate_fn,
+                                 pin_memory=True,
+                                 drop_last=False,
+                                 persistent_workers=True)
 
-    return train_dataloader, valid_dataloader
+    return train_dataloader, test_dataloader
 
 
 def build_model() -> nn.Module:
@@ -195,31 +194,31 @@ def train(model: nn.Module,
     # Get the initialization training time
     end = time.time()
 
-    for batch_index, (images_tensor, labels_tensor, labels_length_tensor) in enumerate(train_dataloader):
+    for batch_index, (images, target, target_length) in enumerate(train_dataloader):
         # Calculate the time it takes to load a batch of data
         data_time.update(time.time() - end)
 
         # Get the number of data in the current batch
-        curren_batch_size = images_tensor.size(0)
+        curren_batch_size = images.size(0)
 
         # Transfer in-memory data to CUDA devices to speed up training
-        images_tensor = images_tensor.to(device=config.device, non_blocking=True)
-        labels_tensor = labels_tensor.to(device=config.device, non_blocking=True)
-        labels_length_tensor = labels_length_tensor.to(device=config.device, non_blocking=True)
+        images = images.to(device=config.device, non_blocking=True)
+        target = target.to(device=config.device, non_blocking=True)
+        target_length = target_length.to(device=config.device, non_blocking=True)
 
         # Initialize generator gradients
         model.zero_grad(set_to_none=True)
 
         # Mixed precision training
         with amp.autocast():
-            output = model(images_tensor)
+            output = model(images)
 
             output_log_probs = F.log_softmax(output, 2)
-            images_lengths_tensor = torch.LongTensor([output.size(0)] * curren_batch_size)
-            labels_length_tensor = torch.flatten(labels_length_tensor)
+            images_lengths = torch.LongTensor([output.size(0)] * curren_batch_size)
+            target_length = torch.flatten(target_length)
 
             # Computational loss
-            loss = criterion(output_log_probs, labels_tensor, images_lengths_tensor, labels_length_tensor)
+            loss = criterion(output_log_probs, target, images_lengths, target_length)
 
         # Backpropagation
         scaler.scale(loss).backward()
@@ -264,40 +263,32 @@ def validate(model: nn.Module,
     total_files = 0
 
     with torch.no_grad():
-        for batch_index, (images_tensor, labels_tensor, labels_length_tensor) in enumerate(dataloader):
+        for batch_index, (_, images, target) in enumerate(dataloader):
             # Get how many data the current batch has and increase the total number of tests
-            total_files += images_tensor.size(0)
+            total_files += images.size(0)
 
             # Transfer in-memory data to CUDA devices to speed up training
-            images_tensor = images_tensor.to(device=config.device, non_blocking=True)
-            labels_tensor = labels_tensor.to(device=config.device, non_blocking=True)
-            labels_length_tensor = labels_length_tensor.to(device=config.device, non_blocking=True)
+            images = images.to(device=config.device, non_blocking=True)
 
             # Mixed precision testing
             with amp.autocast():
-                output = model(images_tensor)
+                output = model(images)
 
             # record accuracy
             output_log_probs = F.log_softmax(output, 2)
-            prediction_labels, _ = ctc_decode(output_log_probs, config.chars_dict)
-            labels_tensor = labels_tensor.cpu().numpy().tolist()
-            labels_length_tensor = labels_length_tensor.cpu().numpy().tolist()
+            _, prediction_chars = ctc_decode(output_log_probs, config.chars_dict)
 
-            labels_length_counter = 0
-            for prediction_label, label_length in zip(prediction_labels, labels_length_tensor):
-                label = labels_tensor[labels_length_counter:labels_length_counter + label_length]
-                labels_length_counter += label_length
-                if prediction_label == label:
-                    total_correct += 1
+            if "".join(prediction_chars[0]) == target[0].lower():
+                total_correct += 1
 
     # print metrics
     acc = (total_correct / total_files) * 100
     print(f"* Acc: {acc:.2f}%")
 
-    if mode == "Valid" or mode == "Test":
+    if mode == "valid" or mode == "test":
         writer.add_scalar(f"{mode}/Acc", acc, epoch + 1)
     else:
-        raise ValueError("Unsupported mode, please use `Valid` or `Test`.")
+        raise ValueError("Unsupported mode, please use `valid` or `test`.")
 
     return acc
 
