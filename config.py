@@ -39,11 +39,11 @@ std = 0.5
 # Current configuration parameter method
 mode = "train"
 # Experiment name, easy to save weights and log files
-exp_name = "CRNN_Synth90K"
+exp_name = "CRNN_MJSynth"
 
 if mode == "train":
     # Dataset
-    train_dataroot = "./data/Synth90k"
+    train_dataroot = "./data/MJSynth"
     test_dataroot = "./data/IIIT5K"
 
     annotation_train_file_name = "annotation_train.txt"
@@ -76,4 +76,4 @@ if mode == "test":
     dataroot = "./data/IIIT5K"
     annotation_file_name = "annotation_test.txt"
 
-    model_path = "results/pretrained_models/CRNN-Synth90k-e9341ede.pth.tar"
+    model_path = "results/pretrained_models/CRNN-MJSynth-e9341ede.pth.tar"
