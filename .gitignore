@@ -136,11 +136,16 @@ samples
 
 # Program run create file.
 *.JPEG
+*.JPG
+*.PNG
+*.BMP
 *.jpeg
-*.bmp
 *.png
+*.jpg
+*.bmp
 *.mp4
 *.zip
 *.csv
+*.txt
 *.pth.tar
 *.mdb
