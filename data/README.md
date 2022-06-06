@@ -33,7 +33,7 @@ Finally, you will get a directory structure like this under this directory.
 
 *Don't forget to modify `<CRNN-PyTorch-main>/config.py` file~~~*
 
-## Step3: Prepare the dataset in the following format (e.g Synth90K)
+## Step3: Prepare the dataset in the following format (e.g MJSynth)
 
 ```text
 # Dataset struct
@@ -59,8 +59,8 @@ Finally, you will get a directory structure like this under this directory.
     - annotation_valid.txt
 
 # Test dataset
-- IIIT5K
-    - train
-    - test
+- SVT
+    - images
+    - annotation.txt
     - annotation_test.txt
 ```
