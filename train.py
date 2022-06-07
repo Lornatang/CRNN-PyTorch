@@ -82,7 +82,7 @@ def main():
 
     for epoch in range(start_epoch, config.epochs):
         train(model, train_dataloader, criterion, optimizer, epoch, scaler, writer)
-        acc = validate(model, test_dataloader, epoch, writer, "Valid")
+        acc = validate(model, test_dataloader, epoch, writer, "valid")
         print("\n")
 
         # Automatically save the model with the highest index
