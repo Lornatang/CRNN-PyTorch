@@ -67,7 +67,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="CRNN model predicts character content in images.")
     parser.add_argument("--image_path", type=str, help="Character image address to be tested.")
-    parser.add_argument("--weights_path", type=str, help="Txt file containing the path to the dataset file.")
+    parser.add_argument("--weights_path", type=str, help="Model weight file path.")
     args = parser.parse_args()
 
     main(args)
